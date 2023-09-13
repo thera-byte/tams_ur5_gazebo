@@ -17,25 +17,28 @@ from std_msgs.msg import String
 from std_msgs.msg import Float32MultiArray
 from gazebo_msgs.srv import SpawnModel
 from geometry_msgs.msg import Pose
+from copy import deepcopy
+import copy as copy_module
 
 # create and fill tuple with collisions and limits
 class TupleClass:
     def __init__(self):
 
-
+        self.js_names = [ "s_model_finger_1_joint_1", "s_model_finger_1_joint_2", "s_model_finger_1_joint_3", \
+                "s_model_finger_2_joint_1", "s_model_finger_2_joint_2", "s_model_finger_2_joint_3", \
+                "s_model_finger_middle_joint_1", "s_model_finger_middle_joint_2", "s_model_finger_middle_joint_3", \
+                "s_model_palm_finger_1_joint", "s_model_palm_finger_2_joint" ]
+        self.js_positions = [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.]
         
-        # move group gripper
-        gripper_group_name = "gripper"
-        self.gripper_move_group = moveit_commander.MoveGroupCommander( gripper_group_name )
-        self.gripper_move_group.set_max_velocity_scaling_factor( 1.0 )
-        self.gripper_move_group.set_max_acceleration_scaling_factor( 1.0 )
+        self.pub = rospy.Publisher('/new_thetas', Float32MultiArray, queue_size=1)
+        self.pub_estimated = rospy.Publisher('/estimated_joint_states', JointState, queue_size=1)
 
         self.tuple = [0, 0, 0, 0, 0, 0]
         self.tuple_f1 = [0, 0, 0, 0, 0, 0]
         self.tuple_f2 = [0, 0, 0, 0, 0, 0]
 
         self.endstate = [0, 0, 0] # middle finger, f1, f2
-        self.new_poses = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+        self.new_poses = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         # here intitial joint states as gripper open pose
         self.current_jointstates = [0.10, 0.02, -0.10, 0.10, 0.02, -0.10, 0.10, 0.02, -0.10]
 
@@ -51,16 +54,12 @@ class TupleClass:
         rospy.Subscriber('/s_model_finger_2_link_1_sensor', ContactsState, self.callback_f2_1, queue_size=10)
         rospy.Subscriber('/s_model_finger_2_link_2_sensor', ContactsState, self.callback_f2_2, queue_size=10)
         rospy.Subscriber('/s_model_finger_2_link_3_sensor', ContactsState, self.callback_f2_3, queue_size=10)
-        
+        rospy.Subscriber('/joint_states', JointState, self.callback_jointstates, queue_size=10)
         #subscriber to newly calculated jointstates
-        rospy.Subscriber('/new_thetas', Float32MultiArray, self.callback5, queue_size=1)
-
-        
-
-        #print("das is g:", g)
+        #rospy.Subscriber('/new_thetas', Float32MultiArray, self.callback5, queue_size=1)
         self._as = actionlib.SimpleActionServer('grasp', tams_ur5_gazebo.msg.graspAction, execute_cb=self.action_callback, auto_start = False)
         self._as.start()
-
+        
         rospy.spin()
 
     def iterate_movements(self, g, g1, g2):
@@ -77,7 +76,18 @@ class TupleClass:
         while self.counter <= iterations and not self.endstate == [1,1,1]:
             print("COUNTER:", self.counter)
             self.calculate_new_pose(g, g1, g2)
-            self.move_to_pose(g, g1, g2)
+            #TODO
+            # jointstate nachtricht hier new thetas die berechnet werden
+            self.js_positions = self.new_poses
+            print('js_positions', self.js_positions)
+            for i in range(len(self.estimated_states.name)):
+                for y in range(len(self.js_names)):
+                    if self.estimated_states.name[i] == self.js_names[y]:
+                        # print('states position:', states.position[i])
+                        self.estimated_positions[i] = self.js_positions[y]
+            self.estimated_states.position = self.estimated_positions            
+            self.pub_estimated.publish(self.estimated_states) 
+           # self.pub_estimated.publish 
             self.counter += 1
             rate.sleep()
 
@@ -101,7 +111,14 @@ class TupleClass:
 
             #rate.sleep()
 
-        #rospy.spin()        
+        #rospy.spin()  
+    def callback_jointstates(self, states):
+        self.estimated_states = JointState()
+        self.estimated_states = deepcopy(states)
+        self.estimated_positions = list(states.position)
+
+                   
+
     def action_callback(self, goal:tams_ur5_gazebo.msg.graspActionGoal):
         self.iterate_movements(goal.g, goal.g1, goal.g2)    
            
@@ -876,7 +893,7 @@ class TupleClass:
         print("f2 new theta 3:", new_pos_finger_2_joint_3)
         print("f2 current jointsstate 3:", self.current_jointstates[5])
 
-        pub = rospy.Publisher('/new_thetas', Float32MultiArray, queue_size=1)
+        
         new_thetas = [new_pos_finger_1_joint_1, new_pos_finger_1_joint_2, new_pos_finger_1_joint_3, 
                       new_pos_finger_2_joint_1, new_pos_finger_2_joint_2, new_pos_finger_2_joint_3, 
                       new_pos_finger_middle_joint_1, new_pos_finger_middle_joint_2, new_pos_finger_middle_joint_3]
@@ -884,11 +901,23 @@ class TupleClass:
         data_to_send = Float32MultiArray()
         data_to_send.data = new_thetas
         rospy.loginfo(data_to_send)
-        pub.publish(data_to_send)
+        self.pub.publish(data_to_send)
+
 
         self.new_poses = [new_pos_finger_1_joint_1, new_pos_finger_1_joint_2, new_pos_finger_1_joint_3, 
                       new_pos_finger_2_joint_1, new_pos_finger_2_joint_2, new_pos_finger_2_joint_3, 
-                      new_pos_finger_middle_joint_1, new_pos_finger_middle_joint_2, new_pos_finger_middle_joint_3]
+                      new_pos_finger_middle_joint_1, new_pos_finger_middle_joint_2, new_pos_finger_middle_joint_3, 0, 0]
+        
+        """self.js_names = [ "s_model_finger_1_joint_1", "s_model_finger_1_joint_2", "s_model_finger_1_joint_3", \
+                "s_model_finger_2_joint_1", "s_model_finger_2_joint_2", "s_model_finger_2_joint_3", \
+                "s_model_finger_middle_joint_1", "s_model_finger_middle_joint_2", "s_model_finger_middle_joint_3", \
+                "s_model_palm_finger_1_joint", "s_model_palm_finger_2_joint" ]"""
+        """self.js_positions = [new_pos_finger_1_joint_1, new_pos_finger_1_joint_2, new_pos_finger_1_joint_3, 
+                      new_pos_finger_2_joint_1, new_pos_finger_2_joint_2, new_pos_finger_2_joint_3, 
+                      new_pos_finger_middle_joint_1, new_pos_finger_middle_joint_2, new_pos_finger_middle_joint_3, 0., 0.]"""
+        #self.js_positions = [self.new_poses[0],self.new_poses[1],self.new_poses[2],self.new_poses[3],
+         #                    self.new_poses[4],self.new_poses[5],self.new_poses[6],self.new_poses[7],self.new_poses[8],  0, 0]
+
         
         if self.counter <= g1:
            self.current_jointstates[0] = self.new_poses[0]

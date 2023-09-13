@@ -7,6 +7,7 @@ project(tams_ur5_gazebo)
 find_package(catkin REQUIRED)
 #########find_package(gazebo REQUIRED)
 #########find_package(robotiq_s_model_articulated_gazebo_plugins REQUIRED)
+find_package(catkin REQUIRED COMPONENTS actionlib_msgs)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -21,6 +22,10 @@ find_package(catkin REQUIRED)
 ## Declare ROS messages and services ##
 #######################################
 
+add_action_files(
+  DIRECTORY action
+  FILES grasp.action
+)
 ## Generate messages in the 'msg' folder
 # add_message_files(
 #   FILES
@@ -36,10 +41,11 @@ find_package(catkin REQUIRED)
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  std_msgs  # Or other packages containing msgs
+  actionlib_msgs
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -54,6 +60,7 @@ catkin_package(
 #  LIBRARIES ur_gazebo
 #  CATKIN_DEPENDS ur_description
 #  DEPENDS system_lib
+  CATKIN_DEPENDS actionlib_msgs
 )
 
 ###########
