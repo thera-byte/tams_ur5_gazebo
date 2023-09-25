@@ -25,6 +25,7 @@ find_package(catkin REQUIRED COMPONENTS actionlib_msgs)
 add_action_files(
   DIRECTORY action
   FILES grasp.action
+  FILES grasp2.action
 )
 ## Generate messages in the 'msg' folder
 # add_message_files(

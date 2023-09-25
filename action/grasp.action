@@ -3,4 +3,7 @@ float32 g
 float32 g1
 float32 g2
 ---
+#result definition
+bool b
 ---
+#feedback definition
