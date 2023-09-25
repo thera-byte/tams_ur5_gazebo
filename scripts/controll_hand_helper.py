@@ -24,23 +24,7 @@ from geometry_msgs.msg import Pose
 
 class ObjectIterator:
         def __init__(self) -> None:
-                # move group am
-                self.arm_group_name = "arm"
-                self.arm_move_group = moveit_commander.MoveGroupCommander( self.arm_group_name )
-                self.arm_move_group.set_max_velocity_scaling_factor( 1.0 )
-                self.arm_move_group.set_max_acceleration_scaling_factor( 1.0 )
-
-                # move group gripper
-                gripper_group_name = "gripper"
-                self.gripper_move_group = moveit_commander.MoveGroupCommander( gripper_group_name )
-                self.gripper_move_group.set_max_velocity_scaling_factor( 1.0 )
-                self.gripper_move_group.set_max_acceleration_scaling_factor( 1.0 )
-
-                rospy.wait_for_service('gazebo/spawn_sdf_model')
-                self.spawn_model_prox = rospy.ServiceProxy('gazebo/spawn_sdf_model', SpawnModel)
-
-                rospy.wait_for_service('gazebo/delete_model')
-                self.delete_model_prox = rospy.ServiceProxy('gazebo/delete_model', DeleteModel)
+                
                 
                 self.client = actionlib.SimpleActionClient('grasp', tams_ur5_gazebo.msg.graspAction)
                 self.client.wait_for_server()
@@ -70,12 +54,10 @@ class ObjectIterator:
                 js.position = [ f1_1, f1_2, f1_3, f2_1, f2_2, f2_3, mf1, mf2, mf3, -0.016, 0.016 ]
                 return js 
         
-        def open_hand(self):
-                gripper_open_pose = self.make_basic_gripper_pose( 0.10, 0.02, -0.10, 0.10, 0.02, -0.10, 0.10, 0.02, -0.10 )
-                self.gripper_move_group.go(gripper_open_pose, wait=True)
+       
 
 
-        def setup(self):        
+        def setup(self, object_path, object_pose ):        
                 arm_home_pose = self.make_arm_pose( [0.0, -1.571, 0.0, -1.571, 0.0, 0.0] )
                 self.arm_move_group.go( arm_home_pose, wait=True )
                 self.arm_move_group.stop()  
@@ -83,17 +65,16 @@ class ObjectIterator:
                 arm_pose_1 = self.make_arm_pose( [ -1.83, -2.68, -1.123, -1.77, -1.13, -3.17 ] )
                 self.arm_move_group.go( arm_pose_1, wait=True )
                 self.arm_move_group.stop()   
-                rospy.sleep(2)
+                rospy.sleep(1)
 
-                
-
-        def spwan_model(self, object_path, object_pose):
                 # object laden
                 # by default, Gazebo SDF models are found in /home/<username>/.gazebo/<modelname>/model.sdf
                 #f = open( os.path.expanduser( '~' )  + '/.gazebo/models/tube_9_5mm/model.sdf', 'r' )
                 f = open( os.path.expanduser( '~' )  + object_path, 'r' )
                 #'/.gazebo/models/coke_can/model.sdf'
                 sdfmodel = f.read()
+
+
                 #spawn_model_prox("tube_9_5mm", sdfmodel, "", initial_pose, "world")  # namespace "coke_can_2" at (1,0.8,0.777) 
                 self.spawn_model_prox("coke_can", sdfmodel, "", object_pose, "world")  # namespace "coke_can_2" at (1,0.8,0.777) 
 
@@ -141,13 +122,11 @@ class ObjectIterator:
 
 
 if __name__ == "__main__":
-        rospy.init_node('grasp_client')
+        rospy.init_node('controll_hand_helper')
         rospy.sleep(1)
 
         x = ObjectIterator()
         
-        # delete object if one is left over from previous run
-        x.delete_object()
 
         #print( "... spawning a object at (1.0, 0.8, 0.78)..." )
         initial_pose = Pose()
@@ -172,57 +151,46 @@ if __name__ == "__main__":
         x.stop_bag_record()
         x.delete_object()
         x.perform_grasp(0, 0, 0)
-        x.open_hand()
         #x.perform_grasp2(0, 0, 0) """
 
         cube_pose = Pose()
         cube_pose.position.x = 0.98  
         cube_pose.position.y = 0.80
-        cube_pose.position.z = 0.87 
-        x.setup()
-        x.spwan_model('/.gazebo/models/wood_cube_5cm/model.sdf', cube_pose)
-        x.start_bag_record()
-        x.perform_grasp(24, 24, 24)
-        x.stop_bag_record()
-        x.delete_object()
-        x.perform_grasp(0, 0, 0)
-        x.open_hand()
-
-        beer_pose = Pose()
-        beer_pose.position.x = 0.98  
-        beer_pose.position.y = 0.80
-        beer_pose.position.z = 0.80
-        x.setup()
-        x.spwan_model('/.gazebo/models/beer/model.sdf', beer_pose)
+        cube_pose.position.z = 0.90 
+        x.setup('/.gazebo/models/beer/model.sdf', cube_pose)
         x.start_bag_record()
         x.perform_grasp(90, 90, 90)
         x.stop_bag_record()
         x.delete_object()
-        x.perform_grasp(0, 0, 0)
         x.open_hand()
 
-        x.setup()
-        x.spwan_model('/.gazebo/models/coke_can/model.sdf', initial_pose)
+        x.setup('/.gazebo/models/coke_can/model.sdf', initial_pose)
         x.start_bag_record()
         x.perform_grasp(24, 24, 24)
         x.stop_bag_record()
         x.delete_object()
-        x.perform_grasp(0, 0, 0)
         x.open_hand()
 
         cup_pose = Pose()
         cup_pose.position.x = 0.98  
         cup_pose.position.y = 0.79
         cup_pose.position.z = 0.80 
-        x.setup()
-        x.spwan_model('/.gazebo/models/plastic_cup/model.sdf', cup_pose)
+        x.setup('/.gazebo/models/plastic_cup/model.sdf', cup_pose)
         x.start_bag_record()
         x.perform_grasp(24, 24, 24)
         x.stop_bag_record()
         x.delete_object()
-        x.perform_grasp(0, 0, 0)
         x.open_hand()
         
 
-        
+        cube_pose = Pose()
+        cube_pose.position.x = 0.98  
+        cube_pose.position.y = 0.80
+        cube_pose.position.z = 0.90 
+        x.setup('/.gazebo/models/wood_cube_5cm/model.sdf', cube_pose)
+        x.start_bag_record()
+        x.perform_grasp(24, 24, 24)
+        x.stop_bag_record()
+        x.delete_object()
+        x.open_hand()
         
