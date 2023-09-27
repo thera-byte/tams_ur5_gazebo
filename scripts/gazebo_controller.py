@@ -51,36 +51,20 @@ class MoveFingers:
         rospy.Subscriber('/s_model_finger_2_link_3_sensor', ContactsState, self.callback_f2_3, queue_size=10)
         # subscriber to current jointstates
         rospy.Subscriber('/joint_states', JointState, self.callback4, queue_size=10)
-        #subscriber to newly calculated jointstates
-        rospy.Subscriber('/new_thetas', Float32MultiArray, self.callback5, queue_size=1)
-
-        
-
-        #print("das is g:", g)
+       
 
         self._as = actionlib.SimpleActionServer('grasp', tams_ur5_gazebo.msg.graspAction, execute_cb=self.action_callback, auto_start = False)
         self._as.start()
 
-        rospy.spin()
+        
         
     def iterate_movements(self, g, g1, g2):
-            #rospy.Timer(rospy.Duration(0.1), self.calculate_new_pose)
-        #counter = 0
-        
-        # nur damit hand schneller aufgeht
-        #if g == 0 and g1 == 0 and g2 == 0:
-              #  gripper_open_pose = self.make_basic_gripper_pose( 0.10, 0.02, -0.10, 0.10, 0.02, -0.10, 0.10, 0.02, -0.10 )
-              #  self.gripper_move_group.go(gripper_open_pose, wait=True) 
-        
-        #rate = rospy.Rate(0.01)
-
-        # self.timer.start()
-        #while not rospy.is_shutdown():
         iterations = max(g, g1, g2)
         print("ITERATIONS", iterations)
         self.counter = 0
         start_time = rospy.Time.now()
-        while self.counter <= iterations and not self.endstate == [1,1,1] and (rospy.Time.now() - start_time).to_sec() < 60:
+        while self.counter <= iterations and not self.endstate == [1,1,1] and (rospy.Time.now() - start_time).to_sec() < 120:
+            rospy.logerr('--------------------------------------------')
             print("COUNTER:", self.counter)
             self.calculate_new_pose(g, g1, g2)
             self.move_to_pose(g, g1, g2)
@@ -95,7 +79,9 @@ class MoveFingers:
             print("------------------------------- max g reached - stopping movement of gripper ------------------------------")
             #self.gripper_move_group.stop()  
             #sys.exit()
-            
+            self.tuple = [0,0,0,0,0,0]
+            self.tuple_f1 = [0,0,0,0,0,0]
+            self.tuple_f2 = [0,0,0,0,0,0]
             self.endstate[0] = 0
             self.endstate[1] = 0
             self.endstate[2] = 0
@@ -299,7 +285,7 @@ class MoveFingers:
         else:
             u = 1
         #if phase 1 :
-        print("tuple: ", self.tuple)
+        #print("tuple: ", self.tuple)
         if self.tuple == [0, 0, 0, 0, 0, 0]:
             
             self.delta_g = u
@@ -307,9 +293,7 @@ class MoveFingers:
             self.delta_theta_2 = 0.00
             self.delta_theta_3 = - self.f_1()
             delta_g = u
-            print("middle phase 1: delta theta 1:", self.delta_theta_1)
-            print("middle phase 1: delta theta 2:", self.delta_theta_2)
-            print("middle phase 1: delta theta 3:", self.delta_theta_3)
+            
             #self.endstate[0] = 0
 
         #if phase 1':
@@ -319,9 +303,7 @@ class MoveFingers:
             self.delta_theta_1 = self.f_1()
             self.delta_theta_2 = 0.00
             self.delta_theta_3 = 0.00
-            print("phase 1': delta theta 1:", self.delta_theta_1)
-            print("phase 1': delta theta 2:", self.delta_theta_2)
-            print("phase 1': delta theta 3:", self.delta_theta_3)  
+            
             #self.endstate[0] = 0
 
         #if phase 2 1:
@@ -331,9 +313,7 @@ class MoveFingers:
             self.delta_theta_1 = 0.00
             self.delta_theta_2 = self.f_2()
             self.delta_theta_3 = - self.f_2()
-            print("phase 2 1: delta theta 1:", self.delta_theta_1)
-            print("phase 2 1: delta theta 2:", self.delta_theta_2)
-            print("phase 2 1: delta theta 3:", self.delta_theta_3) 
+            
             #self.endstate[0] = 0
             
 
@@ -345,9 +325,7 @@ class MoveFingers:
             self.delta_theta_1 = 0.00
             self.delta_theta_2 = self.f_2()
             self.delta_theta_3 = - self.f_2()
-            print("phase 2 2: delta theta 1:", self.delta_theta_1)
-            print("phase 2 2: delta theta 2:", self.delta_theta_2)
-            print("phase 2 2: delta theta 3:", self.delta_theta_3)
+            
             #self.endstate[0] = 0
             
 
@@ -358,9 +336,7 @@ class MoveFingers:
             self.delta_theta_1 = 0.00
             self.delta_theta_2 = self.f_2()
             self.delta_theta_3 = 0.00
-            print("phase 2': delta theta 1:", self.delta_theta_1)
-            print("phase 2': delta theta 2:", self.delta_theta_2)
-            print("phase 2': delta theta 3:", self.delta_theta_3)
+            
             #self.endstate[0] = 0
             
             
@@ -372,9 +348,7 @@ class MoveFingers:
             self.delta_theta_1 = 0.00
             self.delta_theta_2 = self.f_2()
             self.delta_theta_3 = 0.00
-            print("phase 2' 2: delta theta 1:", self.delta_theta_1)
-            print("phase 2' 2: delta theta 2:", self.delta_theta_2)
-            print("phase 2' 2: delta theta 3:", self.delta_theta_3)
+            
             #self.endstate[0] = 0
             
 
@@ -386,9 +360,7 @@ class MoveFingers:
             self.delta_theta_1 = 0.00
             self.delta_theta_2 = 0.00
             self.delta_theta_3 = -self.f_3(g)
-            print("phase 3 1: delta theta 1:", self.delta_theta_1)
-            print("phase 3 1: delta theta 2:", self.delta_theta_2)
-            print("phase 3 1: delta theta 3:", self.delta_theta_3)
+            
             #self.endstate[0] = 0
 
         elif self.tuple[1] == 0 and self.tuple[2] == 0 and self.tuple[4] == 1 and self.tuple[5] == 0: 
@@ -398,9 +370,7 @@ class MoveFingers:
             self.delta_theta_1 = 0.00
             self.delta_theta_2 = 0.00
             self.delta_theta_3 = -self.f_3(g)
-            print("phase 3 2: delta theta 1:", self.delta_theta_1)
-            print("phase 3 2: delta theta 2:", self.delta_theta_2)
-            print("phase 3 2: delta theta 3:", self.delta_theta_3)
+            
             #self.endstate[0] = 0
 
         # neue phase 3': 
@@ -411,9 +381,7 @@ class MoveFingers:
             self.delta_theta_1 = 0.00
             self.delta_theta_2 = 0.00
             self.delta_theta_3 = -self.f_3(g)
-            print("phase 3' 1: delta theta 1:", self.delta_theta_1)
-            print("phase 3' 1: delta theta 2:", self.delta_theta_2)
-            print("phase 3' 1: delta theta 3:", self.delta_theta_3)
+            
             #self.endstate[0] = 0
 
             
@@ -425,9 +393,7 @@ class MoveFingers:
             self.delta_theta_2 = 0.00
             self.delta_theta_3 = 0.00
             self.delta_g = 0.00
-            print("phase 4 1: delta theta 1:", self.delta_theta_1)
-            print("phase 4 1: delta theta 2:", self.delta_theta_2)
-            print("phase 4 1: delta theta 3:", self.delta_theta_3)
+            
             print( "... Middle Finger End State." )
             self.endstate[0] = 1
             #sys.exit()
@@ -438,9 +404,7 @@ class MoveFingers:
             self.delta_theta_2 = 0.00
             self.delta_theta_3 = 0.00
             self.delta_g = 0.00
-            print("phase 4 1': delta theta 1:", self.delta_theta_1)
-            print("phase 4 1': delta theta 2:", self.delta_theta_2)
-            print("phase 4 1': delta theta 3:", self.delta_theta_3)
+            
             print( "... Middle Finger End State." )
             self.endstate[0] = 1
             #sys.exit()    
@@ -451,9 +415,7 @@ class MoveFingers:
             self.delta_theta_2 = 0.00
             self.delta_theta_3 = 0.00
             self.delta_g = 0.00
-            print("phase 4 2: delta theta 1:", self.delta_theta_1)
-            print("phase 4 2: delta theta 2:", self.delta_theta_2)
-            print("phase 4 2: delta theta 3:", self.delta_theta_3)
+            
             print( "... Middle Finger End State." )
             self.endstate[0] = 1
             #sys.exit()
@@ -464,9 +426,7 @@ class MoveFingers:
             self.delta_theta_2 = 0.00
             self.delta_theta_3 = 0.00
             self.delta_g = 0.00
-            print("phase 4 2': delta theta 1:", self.delta_theta_1)
-            print("phase 4 2': delta theta 2:", self.delta_theta_2)
-            print("phase 4 2': delta theta 3:", self.delta_theta_3)
+            
             print( "... Middle Finger End State." )
             self.endstate[0] = 1
             #sys.exit()  
@@ -477,9 +437,7 @@ class MoveFingers:
             self.delta_theta_2 = 0.00
             self.delta_theta_3 = 0.00
             self.delta_g = 0.00
-            print("phase 4 2'2: delta theta 1:", self.delta_theta_1)
-            print("phase 4 2'2: delta theta 2:", self.delta_theta_2)
-            print("phase 4 2'2: delta theta 3:", self.delta_theta_3)
+            
             print( "... Middle Finger End State." )
             self.endstate[0] = 1
             #sys.exit()     
@@ -491,9 +449,7 @@ class MoveFingers:
             self.delta_theta_1 = 0.00
             self.delta_theta_2 = 0.00
             self.delta_theta_3 = 0.00
-            print("phase 4': delta theta 1:", self.delta_theta_1)
-            print("phase 4': delta theta 2:", self.delta_theta_2)
-            print("phase 4': delta theta 3:", self.delta_theta_3)
+            
             self.endstate[1] = 1         
 
         # neue Phase 5 
@@ -514,16 +470,14 @@ class MoveFingers:
         else:
             u = 1
         #if phase 1 :
-        print("tuple_f1: ", self.tuple_f1)
+        #print("tuple_f1: ", self.tuple_f1)
         if self.tuple_f1 == [0, 0, 0, 0, 0, 0]:
             
             self.delta_g = u
             self.f1_delta_theta_1 = self.f_1()
             self.f1_delta_theta_2 = 0.00
             self.f1_delta_theta_3 = - self.f_1()
-            print("f1 phase 1: delta theta 1:", self.f1_delta_theta_1)
-            print("f1 phase 1: delta theta 2:", self.f1_delta_theta_2)
-            print("f1 phase 1: delta theta 3:", self.f1_delta_theta_3)
+           
             #self.endstate[1] = 0
 
         #if phase 1':
@@ -533,9 +487,7 @@ class MoveFingers:
             self.f1_delta_theta_1 = self.f_1()
             self.f1_delta_theta_2 = 0
             self.f1_delta_theta_3 = 0
-            print("f1 phase 1': delta theta 1:", self.f1_delta_theta_1)
-            print("f1 phase 1': delta theta 2:", self.f1_delta_theta_2)
-            print("f1 phase 1': delta theta 3:", self.f1_delta_theta_3)  
+              
             #self.endstate[1] = 0
 
         #if phase 2 1:
@@ -546,9 +498,7 @@ class MoveFingers:
             self.f1_delta_theta_2 = self.f_2()
             self.f1_delta_theta_3 = - self.f_2()
             self.delta_g = u
-            print("f1 phase 2 1: delta theta 1:", self.f1_delta_theta_1)
-            print("f1 phase 2 1: delta theta 2:", self.f1_delta_theta_2)
-            print("f1 phase 2 1: delta theta 3:", self.f1_delta_theta_3) 
+            
             #self.endstate[1] = 0
             
 
@@ -561,9 +511,7 @@ class MoveFingers:
             self.f1_delta_theta_2 = self.f_2()
             self.f1_delta_theta_3 = - self.f_2()
             self.delta_g = u
-            print("f1 phase 2 2: delta theta 1:", self.f1_delta_theta_1)
-            print("f1 phase 2 2: delta theta 2:", self.f1_delta_theta_2)
-            print("f1 phase 2 2: delta theta 3:", self.f1_delta_theta_3)
+            
             #self.endstate[1] = 0
 
         #if phase 2' 1:
@@ -573,9 +521,7 @@ class MoveFingers:
             self.f1_delta_theta_1 = 0
             self.f1_delta_theta_2 = self.f_2()
             self.f1_delta_theta_3 = 0
-            print("f1 phase 2': delta theta 1:", self.f1_delta_theta_1)
-            print("f1 phase 2': delta theta 2:", self.f1_delta_theta_2)
-            print("f1 phase 2': delta theta 3:", self.f1_delta_theta_3)
+            
             #self.endstate[1] = 0
             
 
@@ -586,9 +532,7 @@ class MoveFingers:
             self.f1_delta_theta_1 = 0
             self.f1_delta_theta_2 = self.f_2()
             self.f1_delta_theta_3 = 0
-            print("f1 phase 2' 2: delta theta 1:", self.f1_delta_theta_1)
-            print("f1 phase 2' 2: delta theta 2:", self.f1_delta_theta_2)
-            print("f1 phase 2' 2: delta theta 3:", self.f1_delta_theta_3)
+            
             #self.endstate[1] = 0
 
         #if phase 3:
@@ -599,9 +543,7 @@ class MoveFingers:
             self.f1_delta_theta_1 = 0
             self.f1_delta_theta_2 = 0
             self.f1_delta_theta_3 = -self.f_3_g1(g1)
-            print("f1 phase 3 1: delta theta 1:", self.f1_delta_theta_1)
-            print("f1 phase 3 1: delta theta 2:", self.f1_delta_theta_2)
-            print("f1 phase 3 1: delta theta 3:", self.f1_delta_theta_3)
+            
             #self.endstate[1] = 0
 
         elif self.tuple_f1[1] == 0 and self.tuple_f1[2] == 0 and self.tuple_f1[4] == 1 and self.tuple_f1[5] == 0:
@@ -611,9 +553,7 @@ class MoveFingers:
             self.f1_delta_theta_1 = 0
             self.f1_delta_theta_2 = 0
             self.f1_delta_theta_3 = -self.f_3_g1(g1)
-            print("f1 phase 3 2: delta theta 1:", self.f1_delta_theta_1)
-            print("f1 phase 3 2: delta theta 2:", self.f1_delta_theta_2)
-            print("f1 phase 3 2: delta theta 3:", self.f1_delta_theta_3)
+            
             #self.endstate[1] = 0
 
         # neue phase 3': 
@@ -624,9 +564,7 @@ class MoveFingers:
             self.f1_delta_theta_1 = 0.00
             self.f1_delta_theta_2 = 0.00
             self.f1_delta_theta_3 = self.f_3_g1(g1)
-            print("f1 phase 3' 1: delta theta 1:", self.f1_delta_theta_1)
-            print("f1 phase 3' 1: delta theta 2:", self.f1_delta_theta_2)
-            print("f1 phase 3' 1: delta theta 3:", self.f1_delta_theta_3)
+            
             #self.endstate[1] = 0
 
    
@@ -640,9 +578,7 @@ class MoveFingers:
             self.f1_delta_theta_1 = 0
             self.f1_delta_theta_2 = 0
             self.f1_delta_theta_3 = 0
-            print("f1 phase 4 1: delta theta 1:", self.f1_delta_theta_1)
-            print("f1 phase 4 1: delta theta 2:", self.f1_delta_theta_2)
-            print("f1 phase 4 1: delta theta 3:", self.f1_delta_theta_3)
+            
             print( "... Finger 1 End State." )
             self.endstate[1] = 1
             #sys.exit()
@@ -655,9 +591,7 @@ class MoveFingers:
             self.f1_delta_theta_1 = 0
             self.f1_delta_theta_2 = 0
             self.f1_delta_theta_3 = 0
-            print("f1 phase 4 2: delta theta 1:", self.f1_delta_theta_1)
-            print("f1 phase 4 2: delta theta 2:", self.f1_delta_theta_2)
-            print("f1 phase 4 2: delta theta 3:", self.f1_delta_theta_3)
+            
             print( "... Finger 1 End State." )
             self.endstate[1] = 1
             #sys.exit()
@@ -669,9 +603,7 @@ class MoveFingers:
             self.f1_delta_theta_1 = 0.00
             self.f1_delta_theta_2 = 0.00
             self.f1_delta_theta_3 = 0.00
-            print("f1 phase 4': delta theta 1:", self.f1_delta_theta_1)
-            print("f1 phase 4': delta theta 2:", self.f1_delta_theta_2)
-            print("f1 phase 4': delta theta 3:", self.f1_delta_theta_3)
+            
             self.endstate[1] = 1      
 
         # neue Phase 5 
@@ -691,15 +623,13 @@ class MoveFingers:
         else:
             u = 1
         #if phase 1 :
-        print("tuple_f2: ", self.tuple_f2)
+        #print("tuple_f2: ", self.tuple_f2)
         if self.tuple_f2 == [0, 0, 0, 0, 0, 0]:
             self.f2_delta_theta_1 = self.f_1()
             self.f2_delta_theta_2 = 0
             self.f2_delta_theta_3 = - self.f_1()
             self.delta_g = u
-            print("f2 phase 1: delta theta 1:", self.f2_delta_theta_1)
-            print("f2 phase 1: delta theta 2:", self.f2_delta_theta_2)
-            print("f2 phase 1: delta theta 3:", self.f2_delta_theta_3)
+            
             #self.endstate[2] = 0
 
         #if phase 1':
@@ -708,9 +638,7 @@ class MoveFingers:
             self.f2_delta_theta_2 = 0
             self.f2_delta_theta_3 = 0
             self.delta_g = u
-            print("f2 phase 1': delta theta 1:", self.f2_delta_theta_1)
-            print("f2 phase 1': delta theta 2:", self.f2_delta_theta_2)
-            print("f2 phase 1': delta theta 3:", self.f2_delta_theta_3)  
+             
             #self.endstate[2] = 0
 
         #if phase 2 1:
@@ -719,9 +647,7 @@ class MoveFingers:
             self.f2_delta_theta_2 = self.f_2()
             self.f2_delta_theta_3 = - self.f_2()
             self.delta_g = u
-            print("f2 phase 2 1: delta theta 1:", self.f2_delta_theta_1)
-            print("f2 phase 2 1: delta theta 2:", self.f2_delta_theta_2)
-            print("f2 phase 2 1: delta theta 3:", self.f2_delta_theta_3) 
+            
             #self.endstate[2] = 0
             
 
@@ -732,9 +658,7 @@ class MoveFingers:
             self.f2_delta_theta_2 = self.f_2()
             self.f2_delta_theta_3 = - self.f_2()
             self.delta_g = u
-            print("f2 phase 2 2: delta theta 1:", self.f2_delta_theta_1)
-            print("f2 phase 2 2: delta theta 2:", self.f2_delta_theta_2)
-            print("f2 phase 2 2: delta theta 3:", self.f2_delta_theta_3)
+            
             #self.endstate[2] = 0
             
 
@@ -744,9 +668,7 @@ class MoveFingers:
             self.f2_delta_theta_2 = self.f_2()
             self.f2_delta_theta_3 = 0
             self.delta_g = u
-            print("f2 phase 2': delta theta 1:", self.f2_delta_theta_1)
-            print("f2 phase 2': delta theta 2:", self.f2_delta_theta_2)
-            print("f2 phase 2': delta theta 3:", self.f2_delta_theta_3)
+            
             #self.endstate[2] = 0
             
             
@@ -757,9 +679,7 @@ class MoveFingers:
             self.f2_delta_theta_2 = self.f_2()
             self.f2_delta_theta_3 = 0
             self.delta_g = u
-            print("f2 phase 2' 2: delta theta 1:", self.f2_delta_theta_1)
-            print("f2 phase 2' 2: delta theta 2:", self.f2_delta_theta_2)
-            print("f2 phase 2' 2: delta theta 3:", self.f2_delta_theta_3)
+            
             #self.endstate[2] = 0
             
 
@@ -770,9 +690,7 @@ class MoveFingers:
             self.f2_delta_theta_1 = 0
             self.f2_delta_theta_2 = 0
             self.f2_delta_theta_3 = -self.f_3_g2(g2)
-            print("f2 phase 3 1: delta theta 1:", self.f2_delta_theta_1)
-            print("f2 phase 3 1: delta theta 2:", self.f2_delta_theta_2)
-            print("f2 phase 3 1: delta theta 3:", self.f2_delta_theta_3)
+            
             #self.endstate[2] = 0
 
         elif self.tuple_f2[1] == 0 and self.tuple_f2[2] == 0 and self.tuple_f2[4] == 1 and self.tuple_f2[5] == 0:    
@@ -781,9 +699,7 @@ class MoveFingers:
             self.f2_delta_theta_1 = 0
             self.f2_delta_theta_2 = 0
             self.f2_delta_theta_3 = -self.f_3_g2(g2)
-            print("f2 phase 3 2: delta theta 1:", self.f2_delta_theta_1)
-            print("f2 phase 3 2: delta theta 2:", self.f2_delta_theta_2)
-            print("f2 phase 3 2: delta theta 3:", self.f2_delta_theta_3)
+            
             #self.endstate[2] = 0
 
         # neue phase 3': 
@@ -794,9 +710,7 @@ class MoveFingers:
             self.f2_delta_theta_1 = 0.00
             self.f2_delta_theta_2 = 0.00
             self.f2_delta_theta_3 = -self.f_3_g2(g2)
-            print("f2 phase 3' 1: delta theta 1:", self.f2_delta_theta_1)
-            print("f2 phase 3' 1: delta theta 2:", self.f2_delta_theta_2)
-            print("f2 phase 3' 1: delta theta 3:", self.f2_delta_theta_3)
+            
             #self.endstate[2] = 0
 
         elif self.tuple_f2[1] == 0 and self.tuple_f2[2] == 0 and self.tuple_f2[4] == 1 and self.tuple_f2[5] == -1: 
@@ -806,9 +720,7 @@ class MoveFingers:
             self.f2_delta_theta_1 = 0.00
             self.f2_delta_theta_2 = 0.00
             self.f2_delta_theta_3 = -self.f_3_g2(g2)
-            print("f2 phase 3' 2: delta theta 1:", self.f2_delta_theta_1)
-            print("f2 phase 3' 2: delta theta 2:", self.f2_delta_theta_2)
-            print("f2 phase 3' 2: delta theta 3:", self.f2_delta_theta_3) 
+            
             #self.endstate[2] = 0   
             
         #if phase 4:
@@ -818,9 +730,7 @@ class MoveFingers:
             self.f2_delta_theta_2 = 0
             self.f2_delta_theta_3 = 0
             self.delta_g = 0
-            print("f2 phase 4 1: delta theta 1:", self.f2_delta_theta_1)
-            print("f2 phase 4 1: delta theta 2:", self.f2_delta_theta_2)
-            print("f2 phase 4 1: delta theta 3:", self.f2_delta_theta_3)
+            
             print( "... Finger 2 End State." )
             self.endstate[2] = 1
             #sys.exit()
@@ -830,9 +740,7 @@ class MoveFingers:
             self.f2_delta_theta_2 = 0
             self.f2_delta_theta_3 = 0
             self.delta_g = 0
-            print("f2 phase 4 2: delta theta 1:", self.f2_delta_theta_1)
-            print("f2 phase 4 2: delta theta 2:", self.f2_delta_theta_2)
-            print("f2 phase 4 2: delta theta 3:", self.f2_delta_theta_3)
+            
             print( "... Finger 2 End State." )
             self.endstate[2] = 1
             #sys.exit()
@@ -844,9 +752,7 @@ class MoveFingers:
             self.f2_delta_theta_1 = 0.00
             self.f2_delta_theta_2 = 0.00
             self.f2_delta_theta_3 = 0.00
-            print("f2 phase 4': delta theta 1:", self.f2_delta_theta_1)
-            print("f2 phase 4': delta theta 2:", self.f2_delta_theta_2)
-            print("f2 phase 4': delta theta 3:", self.f2_delta_theta_3)
+            
             self.endstate[1] = 1       
 
         # neue Phase 5 
@@ -869,48 +775,37 @@ class MoveFingers:
 
         # new positions middle finger
         new_pos_finger_middle_joint_1 = self.delta_theta_1 + self.jointstates.position[6] # position 6 is for 1st joint for middle finger
-        print(" middle new theta 1:", new_pos_finger_middle_joint_1)
-        print("middle current jointsstate 1:", self.jointstates.position[6])
+        
         new_pos_finger_middle_joint_2 = self.delta_theta_2 + self.jointstates.position[7] # secont joint middle finger
-        print("middle new theta 2:", new_pos_finger_middle_joint_2)
-        print("middle current jointsstate 2:", self.jointstates.position[7])
+        
         new_pos_finger_middle_joint_3 = self.delta_theta_3 + self.jointstates.position[8]
-        print("middle new theta 3:", new_pos_finger_middle_joint_3)
-        print("middle current jointsstate 3:", self.jointstates.position[8])
+        
 
         # new positions finger 1
         new_pos_finger_1_joint_1 = self.f1_delta_theta_1 + self.jointstates.position[0] # position 6 is for 1st joint for 1 finger
-        print(" f1 new theta 1:", new_pos_finger_1_joint_1)
-        print("f1 current jointsstate 1:", self.jointstates.position[0])
+        
         new_pos_finger_1_joint_2 = self.f1_delta_theta_2 + self.jointstates.position[1] # second joint 1 finger
-        print("f1 new theta 2:", new_pos_finger_1_joint_2)
-        print("f1 current jointsstate 2:", self.jointstates.position[1])
+        
         new_pos_finger_1_joint_3 = self.f1_delta_theta_3 + self.jointstates.position[2]
-        print("f1 new theta 3:", new_pos_finger_1_joint_3)
-        print("f1 current jointsstate 3:", self.jointstates.position[2])
+        
 
         # new positions finger 2
         new_pos_finger_2_joint_1 = self.f2_delta_theta_1 + self.jointstates.position[3] # position 6 is for 1st joint for 1 finger
-        print(" f2 new theta 1:", new_pos_finger_2_joint_1)
-        print("f2 current jointsstate 1:", self.jointstates.position[3])
+        
         new_pos_finger_2_joint_2 = self.f2_delta_theta_2 + self.jointstates.position[4] # secont joint 1 finger
-        print("f2 new theta 2:", new_pos_finger_2_joint_2)
-        print("f2 current jointsstate 2:", self.jointstates.position[4])
+        
         new_pos_finger_2_joint_3 = self.f2_delta_theta_3 + self.jointstates.position[5]
-        print("f2 new theta 3:", new_pos_finger_2_joint_3)
-        print("f2 current jointsstate 3:", self.jointstates.position[5])
+        
 
-        pub = rospy.Publisher('/new_thetas', Float32MultiArray, queue_size=1)
+        
         new_thetas = [new_pos_finger_1_joint_1, new_pos_finger_1_joint_2, new_pos_finger_1_joint_3, 
                       new_pos_finger_2_joint_1, new_pos_finger_2_joint_2, new_pos_finger_2_joint_3, 
                       new_pos_finger_middle_joint_1, new_pos_finger_middle_joint_2, new_pos_finger_middle_joint_3]
-        """new_thetas = [self.new_pos_finger_1_joint_1, self.new_pos_finger_1_joint_2, self.new_pos_finger_1_joint_3, 
-                      self.new_pos_finger_2_joint_1, self.new_pos_finger_2_joint_2, self.new_pos_finger_2_joint_3, 
-                      self.new_pos_finger_middle_joint_1, self.new_pos_finger_middle_joint_2, self.new_pos_finger_middle_joint_3]"""
+        
         data_to_send = Float32MultiArray()
         data_to_send.data = new_thetas
-        rospy.loginfo(data_to_send)
-        pub.publish(data_to_send)
+       
+        self.callback5(data_to_send)
 
         self.new_poses = [new_pos_finger_1_joint_1, new_pos_finger_1_joint_2, new_pos_finger_1_joint_3, 
                       new_pos_finger_2_joint_1, new_pos_finger_2_joint_2, new_pos_finger_2_joint_3, 
@@ -976,7 +871,7 @@ class MoveFingers:
             new_pos_finger_middle_joint_1 = self.jointstates.position[6]
             new_pos_finger_middle_joint_2 = self.jointstates.position[7]
             new_pos_finger_middle_joint_3 = self.jointstates.position[8]
-            print("f1 new positions:", self, self.jointstates.position[0], self.jointstates.position[1], self.jointstates.position[2] )
+            print("f1 new positions:", self.jointstates.position[0], self.jointstates.position[1], self.jointstates.position[2] )
             new_pos_finger_1_joint_1 = self.jointstates.position[0]  
             new_pos_finger_1_joint_2 = self.jointstates.position[1] 
             new_pos_finger_1_joint_3 = self.jointstates.position[2]
@@ -986,7 +881,7 @@ class MoveFingers:
             new_pos_finger_1_joint_1 = self.jointstates.position[0]  
             new_pos_finger_1_joint_2 = self.jointstates.position[1] 
             new_pos_finger_1_joint_3 = self.jointstates.position[2]
-            print("f2 new positions:", self, self.jointstates.position[3], self.jointstates.position[4], self.jointstates.position[5] )
+            print("f2 new positions:", self.jointstates.position[3], self.jointstates.position[4], self.jointstates.position[5] )
             new_pos_finger_2_joint_1 = self.jointstates.position[3]    
             new_pos_finger_2_joint_2 = self.jointstates.position[4]
             new_pos_finger_2_joint_3 = self.jointstates.position[5]
@@ -1064,18 +959,11 @@ class MoveFingers:
     
 
 if __name__ == "__main__":
-    rospy.init_node('alles', anonymous=True)
+    rospy.init_node('gazebo_robotiq_controller', anonymous=True)
     rospy.sleep(1)
 
-    #g = float(input("Please enter g value for middle finger (0 - 254):" ))
-    #print("You entered: ",  g)
-    #g1 = float(input("Please enter g value for finger 1 (0 - 254):" ))
-    #print("You entered: ",  g1)
-    #g2 = float(input("Please enter g value for finger 2 (0 - 254):" ))
-    #print("You entered: ",  g2)
     newMovement = MoveFingers() 
-    #newMovement.iterate_movements(g, g1, g2)
-
-    #rospy.spin()
+    
+    rospy.spin()
 
     

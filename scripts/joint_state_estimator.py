@@ -81,12 +81,12 @@ class TupleClass:
                 self.calculate_new_pose(self.goal[0], self.goal[1], self.goal[2])
                 self.js_positions = self.new_poses
                 print('new poses post calc', self.new_poses )
-                print('js pos:', self.js_positions)
+                #print('js pos:', self.js_positions)
                 # TODO braucht man diesen counter wirklich?
                 if self.counter <= max(self.goal[0], self.goal[1], self.goal[2]):
-                    self.counter += 1
-            self.rate_counter += 1
-            if self.rate_counter == 19:    # dieses zahl ändern um update rate zu erhöhen/ niedriger machen
+                    self.counter += 0.5
+            self.rate_counter += 0.5
+            if self.rate_counter == 9:    # dieses zahl ändern um update rate zu erhöhen/ niedriger machen
                 self.rate_counter = 0
 
             # neue joint states in nachricht eintragen
@@ -97,25 +97,15 @@ class TupleClass:
             states.position = estimated_positions             
 
         if self.goal[0] == 0 and self.goal[1] == 0 and self.goal[2] == 0 :
-            """estimated_positions[0] = self.js_open_positions[0]
-            estimated_positions[1] = self.js_open_positions[1]
-            estimated_positions[2] = self.js_open_positions[2]
-            estimated_positions[3] = self.js_open_positions[3]
-            estimated_positions[4] = self.js_open_positions[4]
-            estimated_positions[5] = self.js_open_positions[5]
-            estimated_positions[6] = self.js_open_positions[6]
-            estimated_positions[7] = self.js_open_positions[7]
-            estimated_positions[8] = self.js_open_positions[8]
-            states.position = estimated_positions 
-            self.rate_counter = 0 """
+            # fill with open position values for jointstate message
             if self.rate_counter == 0 : 
                 self.calculate_new_pose(self.goal[0], self.goal[1], self.goal[2])
                 self.js_positions = self.js_open_positions
                 # TODO braucht man diesen counter wirklich?
                 if self.counter <= max(self.goal[0], self.goal[1], self.goal[2]):
-                    self.counter += 1
-            self.rate_counter += 1
-            if self.rate_counter == 19:    # dieses zahl ändern um update rate zu erhöhen/ niedriger machen
+                    self.counter += 0.5
+            self.rate_counter += 0.5
+            if self.rate_counter == 9:    # dieses zahl ändern um update rate zu erhöhen/ niedriger machen
                 self.rate_counter = 0
 
             # neue joint states in nachricht eintragen
@@ -406,7 +396,7 @@ class TupleClass:
             self.delta_g = u
             self.delta_theta_1 = 0.00
             self.delta_theta_2 = 0.00
-            self.delta_theta_3 = -self.f_3(g)
+            self.delta_theta_3 = self.f_3(g)
             
 
             
@@ -687,6 +677,7 @@ class TupleClass:
             self.delta_g = u
             self.f2_delta_theta_1 = 0
             self.f2_delta_theta_2 = 0
+            print('-1 wert pre calling F3_XU function:', self.new_pos_finger_2_joint_3)
             self.f2_delta_theta_3 = -self.f_3_g2(g2)
             
 
@@ -695,6 +686,7 @@ class TupleClass:
             self.delta_g = u
             self.f2_delta_theta_1 = 0
             self.f2_delta_theta_2 = 0
+            print('0 wert pre calling F3_XU function:', self.new_pos_finger_2_joint_3)
             self.f2_delta_theta_3 = -self.f_3_g2(g2)
             
 
@@ -705,7 +697,8 @@ class TupleClass:
             self.delta_g = u
             self.f2_delta_theta_1 = 0.00
             self.f2_delta_theta_2 = 0.00
-            self.f2_delta_theta_3 = -self.f_3_g2(g2)
+            print('1 wert pre calling F3_XU function:', self.new_pos_finger_2_joint_3)
+            self.f2_delta_theta_3 = self.f_3_g2(g2)
             
 
         elif self.tuple_f2[1] == 0 and self.tuple_f2[2] == 0 and self.tuple_f2[4] == 1 and self.tuple_f2[5] == -1: 
@@ -714,6 +707,7 @@ class TupleClass:
             self.delta_g = u   
             self.f2_delta_theta_1 = 0.00
             self.f2_delta_theta_2 = 0.00
+            print('2 wert pre calling F3_XU function:', self.new_pos_finger_2_joint_3)
             self.f2_delta_theta_3 = -self.f_3_g2(g2)
               
             
@@ -769,35 +763,35 @@ class TupleClass:
         self.calc_delta_theta_f2(g2)
 
         # new positions middle finger
-        new_pos_finger_middle_joint_1 = self.delta_theta_1 + self.current_jointstates[6] # position 6 is for 1st joint for middle finger
-        new_pos_finger_middle_joint_2 = self.delta_theta_2 + self.current_jointstates[7] # secont joint middle finger
-        new_pos_finger_middle_joint_3 = self.delta_theta_3 + self.current_jointstates[8]
+        self.new_pos_finger_middle_joint_1 = self.delta_theta_1 + self.current_jointstates[6] # position 6 is for 1st joint for middle finger
+        self.new_pos_finger_middle_joint_2 = self.delta_theta_2 + self.current_jointstates[7] # secont joint middle finger
+        self.new_pos_finger_middle_joint_3 = self.delta_theta_3 + self.current_jointstates[8]
         
 
         # new positions finger 1
-        new_pos_finger_1_joint_1 = self.f1_delta_theta_1 + self.current_jointstates[0] # position 6 is for 1st joint for 1 finger
-        new_pos_finger_1_joint_2 = self.f1_delta_theta_2 + self.current_jointstates[1] # second joint 1 finger
-        new_pos_finger_1_joint_3 = self.f1_delta_theta_3 + self.current_jointstates[2]
+        self.new_pos_finger_1_joint_1 = self.f1_delta_theta_1 + self.current_jointstates[0] # position 6 is for 1st joint for 1 finger
+        self.new_pos_finger_1_joint_2 = self.f1_delta_theta_2 + self.current_jointstates[1] # second joint 1 finger
+        self.new_pos_finger_1_joint_3 = self.f1_delta_theta_3 + self.current_jointstates[2]
         
 
         # new positions finger 2
-        new_pos_finger_2_joint_1 = self.f2_delta_theta_1 + self.current_jointstates[3] # position 6 is for 1st joint for 1 finger
-        new_pos_finger_2_joint_2 = self.f2_delta_theta_2 + self.current_jointstates[4] # secont joint 1 finger
-        new_pos_finger_2_joint_3 = self.f2_delta_theta_3 + self.current_jointstates[5]
+        self.new_pos_finger_2_joint_1 = self.f2_delta_theta_1 + self.current_jointstates[3] # position 6 is for 1st joint for 1 finger
+        self.new_pos_finger_2_joint_2 = self.f2_delta_theta_2 + self.current_jointstates[4] # secont joint 1 finger
+        self.new_pos_finger_2_joint_3 = self.f2_delta_theta_3 + self.current_jointstates[5]
         
 
         
-        new_thetas = [new_pos_finger_1_joint_1, new_pos_finger_1_joint_2, new_pos_finger_1_joint_3, 
-                      new_pos_finger_2_joint_1, new_pos_finger_2_joint_2, new_pos_finger_2_joint_3, 
-                      new_pos_finger_middle_joint_1, new_pos_finger_middle_joint_2, new_pos_finger_middle_joint_3]
+        new_thetas = [self.new_pos_finger_1_joint_1, self.new_pos_finger_1_joint_2, self.new_pos_finger_1_joint_3, 
+                      self.new_pos_finger_2_joint_1, self.new_pos_finger_2_joint_2, self.new_pos_finger_2_joint_3, 
+                      self.new_pos_finger_middle_joint_1, self.new_pos_finger_middle_joint_2, self.new_pos_finger_middle_joint_3]
 
         data_to_send = Float32MultiArray()
         data_to_send.data = new_thetas
         self.callback5(data_to_send)
 
-        self.new_poses = [new_pos_finger_1_joint_1, new_pos_finger_1_joint_2, new_pos_finger_1_joint_3, 
-                      new_pos_finger_2_joint_1, new_pos_finger_2_joint_2, new_pos_finger_2_joint_3, 
-                      new_pos_finger_middle_joint_1, new_pos_finger_middle_joint_2, new_pos_finger_middle_joint_3, 0, 0]
+        self.new_poses = [self.new_pos_finger_1_joint_1, self.new_pos_finger_1_joint_2, self.new_pos_finger_1_joint_3, 
+                      self.new_pos_finger_2_joint_1, self.new_pos_finger_2_joint_2, self.new_pos_finger_2_joint_3, 
+                      self.new_pos_finger_middle_joint_1, self.new_pos_finger_middle_joint_2, self.new_pos_finger_middle_joint_3, 0, 0]
         
         
         
