@@ -183,9 +183,9 @@ if __name__ == "__main__":
         cube_pose.position.y = 0.80
         cube_pose.position.z = 0.87 
         x.setup()
-        x.spwan_model('/.gazebo/models/wood_cube_5cm/model.sdf', cube_pose)
+        #x.spwan_model('/.gazebo/models/wood_cube_5cm/model.sdf', cube_pose)
         x.start_bag_record()
-        x.perform_grasp(254, 254, 254)
+        x.perform_grasp(24, 24, 24)
         x.stop_bag_record()
         x.delete_object()
         x.perform_grasp(0, 0, 0)
@@ -196,15 +196,15 @@ if __name__ == "__main__":
         beer_pose.position.y = 0.80
         beer_pose.position.z = 0.80
         x.setup()
-        x.spwan_model('/.gazebo/models/beer/model.sdf', beer_pose)
+        #x.spwan_model('/.gazebo/models/beer/model.sdf', beer_pose)
         x.start_bag_record()
-        x.perform_grasp(254, 254, 254)
+        x.perform_grasp(24, 24, 24)
         x.stop_bag_record()
         x.delete_object()
         x.perform_grasp(0, 0, 0)
         x.open_hand()
 
-        x.setup()
+        """x.setup()
         x.spwan_model('/.gazebo/models/coke_can/model.sdf', initial_pose)
         x.start_bag_record()
         x.perform_grasp(24, 24, 24)
@@ -225,7 +225,7 @@ if __name__ == "__main__":
         x.delete_object()
         x.perform_grasp(0, 0, 0)
         x.open_hand()
-        
+        """
 
         
         

@@ -4,7 +4,6 @@
 
 import csv
 import rospy
-import numpy as np
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64MultiArray
 
@@ -16,19 +15,21 @@ class CompareJointStates:
         self.gazebo_joint_states = JointState()
         self.joint_state_differences = Float64MultiArray()
         self.joint_state_differences.data = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+        
 
-        self.end_differences = JointState()
+        self.end_differences = Float64MultiArray()
+        self.end_differences.data = [0, 0, 0, 0, 0, 0, 0, 0, 0]
         
         
-        rospy.Subscriber('/joint_states', JointState, self.callback_gazebo_jointstates, queue_size=1)
-        rospy.Subscriber('/estimated_joint_states', JointState, self.callback_estimated_jointstates, queue_size=1)
+        #rospy.Subscriber('/joint_states', JointState, self.callback_gazebo_jointstates, queue_size=1)
+        #rospy.Subscriber('/estimated_joint_states', JointState, self.callback_estimated_jointstates, queue_size=1)
 
         # subscriber to endstate joint states of both joint states and estimated joint states
         rospy.Subscriber('/end_joint_states', JointState, self.end_joint_states_cb, queue_size=1)
         rospy.Subscriber('/end_estimated_joint_states', JointState, self.end_estimated_joint_states_cb, queue_size=1)
 
         # publisher gripper joinst state differences als float array
-        self.pub_joint_state_differences = rospy.Publisher('/js_differences', Float64MultiArray, queue_size=1)
+        #self.pub_joint_state_differences = rospy.Publisher('/js_differences', Float64MultiArray, queue_size=1)
 
         # publisher endstate joint state differences
         self.pub_end_differences = rospy.Publisher('/end_differences', Float64MultiArray, queue_size=1)
@@ -63,20 +64,25 @@ class CompareJointStates:
         self.end_estimated_joint_states = states
 
         # subtract end joint states
-        self.end_differences.position[0] = self.end_joint_states.position[0] - self.end_estimated_joint_states.position[0]
-        self.end_differences.position[1] = self.end_joint_states.position[1] - self.end_estimated_joint_states.position[0]
-        self.end_differences.position[2] = self.end_joint_states.position[2] - self.end_estimated_joint_states.position[0]
-        self.end_differences.position[3] = self.end_joint_states.position[3] - self.end_estimated_joint_states.position[0]
-        self.end_differences.position[4] = self.end_joint_states.position[4] - self.end_estimated_joint_states.position[0]
-        self.end_differences.position[5] = self.end_joint_states.position[5] - self.end_estimated_joint_states.position[0]
-        self.end_differences.position[6] = self.end_joint_states.position[6] - self.end_estimated_joint_states.position[0]
-        self.end_differences.position[7] = self.end_joint_states.position[7] - self.end_estimated_joint_states.position[0]
-        self.end_differences.position[8] = self.end_joint_states.position[8] - self.end_estimated_joint_states.position[0]
+        self.end_differences.data[0] = self.end_joint_states.position[0] - self.end_estimated_joint_states.position[0]
+        self.end_differences.data[1] = self.end_joint_states.position[1] - self.end_estimated_joint_states.position[1]
+        self.end_differences.data[2] = self.end_joint_states.position[2] - self.end_estimated_joint_states.position[2]
+        self.end_differences.data[3] = self.end_joint_states.position[3] - self.end_estimated_joint_states.position[3]
+        self.end_differences.data[4] = self.end_joint_states.position[4] - self.end_estimated_joint_states.position[4]
+        self.end_differences.data[5] = self.end_joint_states.position[5] - self.end_estimated_joint_states.position[5]
+        self.end_differences.data[6] = self.end_joint_states.position[6] - self.end_estimated_joint_states.position[6]
+        self.end_differences.data[7] = self.end_joint_states.position[7] - self.end_estimated_joint_states.position[7]
+        self.end_differences.data[8] = self.end_joint_states.position[8] - self.end_estimated_joint_states.position[8]
 
         self.pub_end_differences.publish(self.end_differences)
-        print('End Differences:', self.end_differences)
+        print('End Differences:', self.end_differences.data)
 
+        
 
+        with open('/home/aura/Schreibtisch/Bags/end_differences_empty_gripper.csv', 'a', newline='') as file:
+            writer = csv.writer(file, delimiter=';')
+            writer.writerow(self.end_differences.data)
+            
 
     
 if __name__ == "__main__":
