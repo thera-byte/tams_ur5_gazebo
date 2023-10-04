@@ -100,9 +100,10 @@ class MoveFingers:
             self.counter = 0
 
             # publish the end joint states
-            self.end_joint_states = JointState()
-            self.end_joint_states.position = new_poses
-            self.pub_end_joint_states.publish(self.end_joint_states)
+            if max(g, g1, g2) > 0:
+                self.end_joint_states = JointState()
+                self.end_joint_states.position = new_poses
+                self.pub_end_joint_states.publish(self.end_joint_states)
 
             self._as.set_succeeded(tams_ur5_gazebo.msg.graspActionResult())
         else:
@@ -172,23 +173,23 @@ class MoveFingers:
 
 
     def check_joint_1(self, joint_state):
-        if joint_state < 0.0495:
+        if joint_state <= 0.0495:
             return 0.0495, 1
-        elif joint_state > 1.20:
+        elif joint_state >= 1.20:
             return 1.20, 1
         return joint_state, 0
 
     def check_joint_2(self, joint_state):
-        if joint_state < 0.0:
+        if joint_state <= 0.0:
             return 0.0, 1
-        elif joint_state > 1.526:
+        elif joint_state >= 1.526:
             return 1.526, 1
         return joint_state, 0 
 
     def check_joint_3(self, joint_state):
-        if joint_state < -1.20:
+        if joint_state <= -1.20:
             return -1.20, -1
-        elif joint_state > -0.06:
+        elif joint_state >= -0.06:
             return -0.06, 1
         return joint_state, 0
         
@@ -212,7 +213,7 @@ class MoveFingers:
         # new positions finger 1
         new_pos_finger_1_joint_1, self.tuple_f1[3] = self.check_joint_1(self.f1_delta_theta_1 + self.jointstates.position[0]) # position 6 is for 1st joint for 1 finger
         new_pos_finger_1_joint_2, self.tuple_f1[4] = self.check_joint_2(self.f1_delta_theta_2 + self.jointstates.position[1]) # second joint 1 finger
-        new_pos_finger_1_joint_3, self.tuple_f2[5] = self.check_joint_3(self.f1_delta_theta_3 + self.jointstates.position[2])
+        new_pos_finger_1_joint_3, self.tuple_f1[5] = self.check_joint_3(self.f1_delta_theta_3 + self.jointstates.position[2])
 
         # new positions finger 2
         new_pos_finger_2_joint_1, self.tuple_f2[3] = self.check_joint_1(self.f2_delta_theta_1 + self.jointstates.position[3]) # position 6 is for 1st joint for 1 finger

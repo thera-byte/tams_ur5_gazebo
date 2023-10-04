@@ -15,6 +15,24 @@ from tams_ur5_gazebo_lib import theta_calculator
 # create and fill tuple with collisions and limits
 class TupleClass:
     def __init__(self):
+        self.tuple = [0, 0, 0, 0, 0, 0]
+        self.tuple_f1 = [0, 0, 0, 0, 0, 0]
+        self.tuple_f2 = [0, 0, 0, 0, 0, 0]
+
+        self.endstate = [0, 0, 0] # middle finger, f1, f2
+        self.new_poses = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        # here intitial joint states as gripper open pose
+        self.current_jointstates = [0.10, 0.02, -0.10, 0.10, 0.02, -0.10, 0.10, 0.02, -0.10]
+
+        self.goal = [0,0,0]
+
+        self.counter = 0
+        self.current_g = 0
+        self.current_g1 = 0
+        self.current_g2 = 0
+
+        self.end_js_publish = True
+
         self.theta_c = theta_calculator.ThetaCalculator()
 
         self.js_names = [ "s_model_finger_1_joint_1", "s_model_finger_1_joint_2", "s_model_finger_1_joint_3", \
@@ -31,21 +49,7 @@ class TupleClass:
         
         self.pub_estimated = rospy.Publisher('/estimated_joint_states', JointState, queue_size=1)
 
-        self.tuple = [0, 0, 0, 0, 0, 0]
-        self.tuple_f1 = [0, 0, 0, 0, 0, 0]
-        self.tuple_f2 = [0, 0, 0, 0, 0, 0]
-
-        self.endstate = [0, 0, 0] # middle finger, f1, f2
-        self.new_poses = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        # here intitial joint states as gripper open pose
-        self.current_jointstates = [0.10, 0.02, -0.10, 0.10, 0.02, -0.10, 0.10, 0.02, -0.10]
-
-        self.goal = [0,0,0]
-
-        self.counter = 0
-        self.current_g = 0
-        self.current_g1 = 0
-        self.current_g2 = 0
+        
         
         
         #Create a subscribers to all sensors on all fingers
@@ -81,17 +85,18 @@ class TupleClass:
                 #self.calculate_new_pose(self.goal[0], self.goal[1], self.goal[2])
                 self.calculate_new_pose(self.current_g, self.current_g1, self.current_g2)
                 self.js_positions = self.new_poses
-                #print('new poses post calc', self.new_poses )
-                #print('js pos:', self.js_positions)
+                print('js pos:', self.js_positions)
                 # TODO braucht man diesen counter wirklich?
+                """
                 if self.counter <= max(self.goal[0], self.goal[1], self.goal[2]):
                     self.counter += 1
+                    print("COUNTER:", self.counter)
                 if self.counter == max(self.goal[0], self.goal[1], self.goal[2]): 
                     self.end_estimated_joint_states = JointState()
                     self.end_estimated_joint_states.position = self.new_poses
-                    self.pub_end_estimated_joint_states.publish(self.end_estimated_joint_states)   
+                    self.pub_end_estimated_joint_states.publish(self.end_estimated_joint_states) """  
             self.rate_counter += 0.5
-            if self.rate_counter == 9:    # dieses zahl ändern um update rate zu erhöhen/ niedriger machen
+            if self.rate_counter == 7:    # dieses zahl ändern um update rate zu erhöhen/ niedriger machen
                 self.rate_counter = 0
 
             # neue joint states in nachricht eintragen
@@ -108,10 +113,12 @@ class TupleClass:
                 self.calculate_new_pose(self.current_g, self.current_g1, self.current_g2)
                 self.js_positions = self.js_open_positions
                 # TODO braucht man diesen counter wirklich?
-                if self.counter <= max(self.goal[0], self.goal[1], self.goal[2]):
-                    self.counter += 1
+                #if self.counter <= max(self.goal[0], self.goal[1], self.goal[2]):
+                    #self.counter += 1
+                # damit endstate reseted bleibt beim öffnen    
+                self.endstate = [0,0,0]    
             self.rate_counter += 0.5
-            if self.rate_counter == 9:    # dieses zahl ändern um update rate zu erhöhen/ niedriger machen
+            if self.rate_counter == 7:    # dieses zahl ändern um update rate zu erhöhen/ niedriger machen
                 self.rate_counter = 0
 
             # neue joint states in nachricht eintragen
@@ -140,6 +147,7 @@ class TupleClass:
 
     def goal_callback(self, goal:tams_ur5_gazebo.msg.graspActionGoal):
         self.counter = 0
+        self.end_js_publish = True
         self.goal[0] = goal.goal.g
         self.goal[1] = goal.goal.g1
         self.goal[2] = goal.goal.g2
@@ -203,23 +211,23 @@ class TupleClass:
             self.tuple_f2[2] = 0
 
     def check_joint_1(self, joint_state):
-        if joint_state < 0.0495:
+        if joint_state <= 0.0495:
             return 0.0495, 1
-        elif joint_state > 1.20:
+        elif joint_state >= 1.20:
             return 1.20, 1
         return joint_state, 0
 
     def check_joint_2(self, joint_state):
-        if joint_state < 0.0:
+        if joint_state <= 0.0:
             return 0.0, 1
-        elif joint_state > 1.526:
+        elif joint_state >= 1.526:
             return 1.526, 1
         return joint_state, 0 
 
     def check_joint_3(self, joint_state):
-        if joint_state < -1.20:
+        if joint_state <= -1.20:
             return -1.20, -1
-        elif joint_state > -0.06:
+        elif joint_state >= -0.06:
             return -0.06, 1
         return joint_state, 0
     
@@ -228,10 +236,13 @@ class TupleClass:
     def calculate_new_pose(self, g, g1, g2):    
         print("Middle Finger")
         self.delta_theta_1, self.delta_theta_2, self.delta_theta_3, self.delta_g, self.endstate[0]  = self.theta_c.calc_delta(g, self.tuple, self.endstate[0])
+        #print("delta_theta_2", self.delta_theta_2)
         print("Finger 1")
         self.f1_delta_theta_1, self.f1_delta_theta_2, self.f1_delta_theta_3, self.delta_g, self.endstate[1]  = self.theta_c.calc_delta(g1, self.tuple_f1, self.endstate[1])
+        #print("f1_delta_theta_2", self.f1_delta_theta_2)
         print("Finger 2")
         self.f2_delta_theta_1, self.f2_delta_theta_2, self.f2_delta_theta_3, self.delta_g, self.endstate[2]  = self.theta_c.calc_delta(g2, self.tuple_f2, self.endstate[2])
+        #print("f2_delta_theta_2", self.f2_delta_2)
         # new positions middle finger
         new_pos_finger_middle_joint_1, self.tuple[3] = self.check_joint_1(self.delta_theta_1 + self.current_jointstates[6]) # position 6 is for 1st joint for middle finger
         new_pos_finger_middle_joint_2, self.tuple[4] = self.check_joint_2(self.delta_theta_2 + self.current_jointstates[7]) # secont joint middle finger
@@ -240,7 +251,7 @@ class TupleClass:
         # new positions finger 1
         new_pos_finger_1_joint_1, self.tuple_f1[3] = self.check_joint_1(self.f1_delta_theta_1 + self.current_jointstates[0]) # position 6 is for 1st joint for 1 finger
         new_pos_finger_1_joint_2, self.tuple_f1[4] = self.check_joint_2(self.f1_delta_theta_2 + self.current_jointstates[1]) # second joint 1 finger
-        new_pos_finger_1_joint_3, self.tuple_f2[5] = self.check_joint_3(self.f1_delta_theta_3 + self.current_jointstates[2])
+        new_pos_finger_1_joint_3, self.tuple_f1[5] = self.check_joint_3(self.f1_delta_theta_3 + self.current_jointstates[2])
 
         # new positions finger 2
         new_pos_finger_2_joint_1, self.tuple_f2[3] = self.check_joint_1(self.f2_delta_theta_1 + self.current_jointstates[3]) # position 6 is for 1st joint for 1 finger
@@ -253,18 +264,39 @@ class TupleClass:
         
 
         
-        if self.counter <= g1:
+        #if self.counter <= g1:
+        if self.current_g1 <= self.goal[0]:   
            self.current_jointstates[0] = self.new_poses[0]
            self.current_jointstates[1] = self.new_poses[1]     
            self.current_jointstates[2] = self.new_poses[2]          
-        if self.counter <= g2:
+        #if self.counter <= g2:
+        if self.current_g2 <= self.goal[1]:  
            self.current_jointstates[3] = self.new_poses[3]
            self.current_jointstates[4] = self.new_poses[4]     
            self.current_jointstates[5] = self.new_poses[5] 
-        if self.counter <= g:        
+        #if self.counter <= g:
+        if self.current_g <= self.goal[2]:          
            self.current_jointstates[6] = self.new_poses[6]
            self.current_jointstates[7] = self.new_poses[7]     
            self.current_jointstates[8] = self.new_poses[8] 
+
+        #if self.current_g <= max(self.goal[0], self.goal[1], self.goal[2]):
+         #   self.counter += 1
+          #  print("COUNTER:", self.counter)
+        if (max(self.current_g, self.current_g1, self.current_g2) == max(self.goal[0], self.goal[1], self.goal[2]) and max(self.goal[0], self.goal[1], self.goal[2]) > 0 ) \
+            or (max(self.goal[0], self.goal[1], self.goal[2]) > 0 and self.endstate == [1,1,1]): 
+            print("CURRENT Gs: -------------------------------------------------", self.current_g, self.current_g1, self.current_g2)
+            print("GOALs: ............................................", self.goal[0], self.goal[1], self.goal[2])
+            print("ENDSTATE: __________________________________________", self.endstate)
+            #if max(self.goal[0], self.goal[1], self.goal[2]) > 0: 
+            #if max(self.current_g, self.current_g1, self.current_g2) > 0:
+            print("END JS PUB", self.end_js_publish)
+            if self.end_js_publish == True:
+                self.end_estimated_joint_states = JointState()
+                self.end_estimated_joint_states.position = self.new_poses
+                self.pub_end_estimated_joint_states.publish(self.end_estimated_joint_states)
+                self.end_js_publish = False
+                self.endstate = [0,0,0]
 
            # this is needed or else the hand will continue in previous last closing position after opening  
         if g1 == 0:
@@ -280,6 +312,7 @@ class TupleClass:
            self.current_jointstates[7] = 0.02   
            self.current_jointstates[8] = -0.10  
 
+        
     
 if __name__ == "__main__":
     rospy.init_node('alles', anonymous=True)

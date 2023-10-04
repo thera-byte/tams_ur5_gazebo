@@ -19,6 +19,9 @@ class CompareJointStates:
 
         self.end_differences = Float64MultiArray()
         self.end_differences.data = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+        self.end_joint_states = None
+        self.end_estimated_joint_states = None
         
         
         #rospy.Subscriber('/joint_states', JointState, self.callback_gazebo_jointstates, queue_size=1)
@@ -59,10 +62,18 @@ class CompareJointStates:
 
     def end_joint_states_cb(self, states):
         self.end_joint_states = states
+        self.check_end_states_published()
 
     def end_estimated_joint_states_cb(self, states):
         self.end_estimated_joint_states = states
+        self.check_end_states_published()
 
+    def check_end_states_published(self):
+        if self.end_joint_states != None and self.end_estimated_joint_states != None:
+            self.subtract()
+
+
+    def subtract(self):    
         # subtract end joint states
         self.end_differences.data[0] = self.end_joint_states.position[0] - self.end_estimated_joint_states.position[0]
         self.end_differences.data[1] = self.end_joint_states.position[1] - self.end_estimated_joint_states.position[1]
@@ -82,6 +93,9 @@ class CompareJointStates:
         with open('/home/aura/Schreibtisch/Bags/end_differences_empty_gripper.csv', 'a', newline='') as file:
             writer = csv.writer(file, delimiter=';')
             writer.writerow(self.end_differences.data)
+
+        self.end_joint_states = None
+        self.end_estimated_joint_states = None    
             
 
     
