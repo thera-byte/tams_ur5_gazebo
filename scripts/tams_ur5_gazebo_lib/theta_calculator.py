@@ -17,10 +17,12 @@ class ThetaCalculator:
     
     # funktion f_2(x,u)
     def f_2(self, delta_g):
+        delta_g = 1
         theta_2_max = 1.526 #1.5708
         m_2 = theta_2_max / 100
         
         f_2_xu = m_2 * delta_g
+        print(f_2_xu)
         return f_2_xu
     
     # funktion f_3(x,u):  
@@ -76,7 +78,8 @@ class ThetaCalculator:
 
 
         # 2     ###########################################################
-        elif tuple == [1, 0, 0, 0, 0, 0] or tuple == [1, 0, 0, 1, 0, 0] or tuple == [0, 0, 0, 1, 0, 0]:
+        elif tuple == [1, 0, 0, 0, 0, 0] or tuple == [1, 0, 0, 1, 0, 0] or tuple == [0, 0, 0, 1, 0, 0] or tuple == [0, 0, 0, 0, 1, 0]:
+            # or tuple == [0, 0, 0, 0, 1, 0] für wenn die hand wackelt und sich aus joint 1 limit bewegt (nicht geil, notlösung) 
             print("phase 2")
             delta_g = u
             delta_theta_1 = 0.00
