@@ -96,7 +96,7 @@ class TupleClass:
                     self.end_estimated_joint_states.position = self.new_poses
                     self.pub_end_estimated_joint_states.publish(self.end_estimated_joint_states) """  
             self.rate_counter += 0.5
-            if self.rate_counter == 7:    # dieses zahl ändern um update rate zu erhöhen/ niedriger machen
+            if self.rate_counter == 8:    # dieses zahl ändern um update rate zu erhöhen/ niedriger machen
                 self.rate_counter = 0
 
             # neue joint states in nachricht eintragen
@@ -118,7 +118,7 @@ class TupleClass:
                 # damit endstate reseted bleibt beim öffnen    
                 self.endstate = [0,0,0]    
             self.rate_counter += 0.5
-            if self.rate_counter == 7:    # dieses zahl ändern um update rate zu erhöhen/ niedriger machen
+            if self.rate_counter == 8:    # dieses zahl ändern um update rate zu erhöhen/ niedriger machen
                 self.rate_counter = 0
 
             # neue joint states in nachricht eintragen

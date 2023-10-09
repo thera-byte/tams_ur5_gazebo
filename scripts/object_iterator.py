@@ -178,107 +178,71 @@ if __name__ == "__main__":
         x.open_hand()
         #x.perform_grasp2(0, 0, 0)  """
 
-        #cube_pose = Pose()
-        #cube_pose.position.x = 0.98  
-        #cube_pose.position.y = 0.80
-        #cube_pose.position.z = 0.87 
+        """cube_pose = Pose()
+        cube_pose.position.x = 0.98  
+        cube_pose.position.y = 0.804
+        cube_pose.position.z = 0.87 
+        x.setup()
+        rospy.sleep(3)
+        x.spwan_model('/.gazebo/models/wood_cube_5cm/model.sdf', cube_pose)
+        x.start_bag_record()
+        x.perform_grasp(254, 254, 254)
+        rospy.sleep(3)
+        x.stop_bag_record()
+        x.delete_object()
+        x.perform_grasp(0, 0, 0)
+        x.open_hand() """
 
         
-        x.setup()
-        #x.spwan_model('/.gazebo/models/wood_cube_5cm/model.sdf', cube_pose)
-        x.start_bag_record()
-        x.perform_grasp(254, 254, 254)
-        rospy.sleep(5)
-        x.stop_bag_record()
-        x.delete_object()
-        x.perform_grasp(0, 0, 0)
-        x.open_hand()
-
-        x.setup()
-        #x.spwan_model('/.gazebo/models/wood_cube_5cm/model.sdf', cube_pose)
-        x.start_bag_record()
-        x.perform_grasp(254, 254, 254)
-        rospy.sleep(5)
-        x.stop_bag_record()
-        x.delete_object()
-        x.perform_grasp(0, 0, 0)
-        x.open_hand()
-
-        x.setup()
-        #x.spwan_model('/.gazebo/models/wood_cube_5cm/model.sdf', cube_pose)
-        x.start_bag_record()
-        x.perform_grasp(254, 254, 254)
-        rospy.sleep(5)
-        x.stop_bag_record()
-        x.delete_object()
-        x.perform_grasp(0, 0, 0)
-        x.open_hand()
-
-        x.setup()
-        #x.spwan_model('/.gazebo/models/wood_cube_5cm/model.sdf', cube_pose)
-        x.start_bag_record()
-        x.perform_grasp(254, 254, 254)
-        rospy.sleep(5)
-        x.stop_bag_record()
-        x.delete_object()
-        x.perform_grasp(0, 0, 0)
-        x.open_hand()
-
-        x.setup()
-        #x.spwan_model('/.gazebo/models/wood_cube_5cm/model.sdf', cube_pose)
-        x.start_bag_record()
-        x.perform_grasp(254, 254, 254)
-        rospy.sleep(5)
-        x.stop_bag_record()
-        x.delete_object()
-        x.perform_grasp(0, 0, 0)
-        x.open_hand()
-
-        x.setup()
-        #x.spwan_model('/.gazebo/models/wood_cube_5cm/model.sdf', cube_pose)
-        x.start_bag_record()
-        x.perform_grasp(254, 254, 254)
-        rospy.sleep(5)
-        x.stop_bag_record()
-        x.delete_object()
-        x.perform_grasp(0, 0, 0)
-        x.open_hand()
-
+        
         """beer_pose = Pose()
-        beer_pose.position.x = 0.98  
-        beer_pose.position.y = 0.80
+        beer_pose.position.x = 1.0  
+        beer_pose.position.y = 0.80099
         beer_pose.position.z = 0.80
         x.setup()
-        #x.spwan_model('/.gazebo/models/beer/model.sdf', beer_pose)
+        rospy.sleep(3)
+        x.spwan_model('/.gazebo/models/beer/model.sdf', beer_pose)
         x.start_bag_record()
-        x.perform_grasp(24, 24, 24)
-        x.stop_bag_record()
-        x.delete_object()
-        x.perform_grasp(0, 0, 0)
-        x.open_hand()
-
-        x.setup()
-        x.spwan_model('/.gazebo/models/coke_can/model.sdf', initial_pose)
-        x.start_bag_record()
-        x.perform_grasp(24, 24, 24)
-        x.stop_bag_record()
-        x.delete_object()
-        x.perform_grasp(0, 0, 0)
-        x.open_hand()
-
-        cup_pose = Pose()
-        cup_pose.position.x = 0.98  
-        cup_pose.position.y = 0.79
-        cup_pose.position.z = 0.80 
-        x.setup()
-        x.spwan_model('/.gazebo/models/plastic_cup/model.sdf', cup_pose)
-        x.start_bag_record()
-        x.perform_grasp(24, 24, 24)
+        x.perform_grasp(254, 254, 254)
+        rospy.sleep(3)
         x.stop_bag_record()
         x.delete_object()
         x.perform_grasp(0, 0, 0)
         x.open_hand()
         """
+
+        """
+        coke_pose = Pose()
+        coke_pose.position.x = 0.98 # 0.96 nach vorne 
+        coke_pose.position.y = 0.805 # 0.80 nach links von bot aus gesehen
+        coke_pose.position.z = 0.80 
+        x.setup()
+        rospy.sleep(3)
+        x.spwan_model('/.gazebo/models/coke_can/model.sdf', coke_pose)
+        x.start_bag_record()
+        x.perform_grasp(254, 254, 254)
+        rospy.sleep(3)
+        x.stop_bag_record()
+        x.delete_object()
+        x.perform_grasp(0, 0, 0)
+        x.open_hand()
+        """
+
+        
+        cup_pose = Pose()
+        cup_pose.position.x = 0.99  
+        cup_pose.position.y = 0.795
+        cup_pose.position.z = 0.80 
+        x.setup()
+        x.spwan_model('/.gazebo/models/plastic_cup/model.sdf', cup_pose)
+        x.start_bag_record()
+        x.perform_grasp(254, 254, 254)
+        x.stop_bag_record()
+        x.delete_object()
+        x.perform_grasp(0, 0, 0)
+        x.open_hand()
+
+              
 
         
         
