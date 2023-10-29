@@ -9,6 +9,8 @@ from std_msgs.msg import Int16
 from gazebo_msgs.msg import ContactsState
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Float32MultiArray
+from std_msgs.msg import Int16
+
 from copy import deepcopy
 from tams_ur5_gazebo_lib import theta_calculator
 
@@ -20,7 +22,14 @@ class TupleClass:
         self.tuple_f2 = [0, 0, 0, 0, 0, 0]
 
         self.endstate = [0, 0, 0] # middle finger, f1, f2
-        self.new_poses = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        self.end_movement = [0,0,0]
+
+        self.middle_end = 0
+        self.f1_end = 0
+        self.f1_end = 0
+
+        #self.new_poses = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] # for basic mode
+        self.new_poses = [0, 0, 0, 0, 0, 0, 0, 0, 0, -0.15, 0.15] # for pinch mode
         # here intitial joint states as gripper open pose
         self.current_jointstates = [0.10, 0.02, -0.10, 0.10, 0.02, -0.10, 0.10, 0.02, -0.10]
 
@@ -31,6 +40,10 @@ class TupleClass:
         self.current_g1 = 0
         self.current_g2 = 0
 
+        self.old_g = -1
+        self.old_g1 = -1
+        self.old_g2 = -1
+
         self.end_js_publish = True
 
         self.theta_c = theta_calculator.ThetaCalculator()
@@ -39,8 +52,10 @@ class TupleClass:
                 "s_model_finger_2_joint_1", "s_model_finger_2_joint_2", "s_model_finger_2_joint_3", \
                 "s_model_finger_middle_joint_1", "s_model_finger_middle_joint_2", "s_model_finger_middle_joint_3", \
                 "s_model_palm_finger_1_joint", "s_model_palm_finger_2_joint" ]
-        self.js_positions = [0.10, 0.02, -0.10, 0.10, 0.02, -0.10, 0.10, 0.02, -0.10, 0, 0] # gripper open position inital werte
-        self.js_open_positions = [0.10, 0.02, -0.10, 0.10, 0.02, -0.10, 0.10, 0.02, -0.10, 0, 0] # gripper open position inital werte
+        #self.js_positions = [0.10, 0.02, -0.10, 0.10, 0.02, -0.10, 0.10, 0.02, -0.10, 0, 0] # gripper open position inital werte
+        self.js_positions = [0.10, 0.02, -0.10, 0.10, 0.02, -0.10, 0.10, 0.02, -0.10, -0.15, 0.15] # for pinch mode
+        #self.js_open_positions = [0.10, 0.02, -0.10, 0.10, 0.02, -0.10, 0.10, 0.02, -0.10, 0, 0] # gripper open position inital werte
+        self.js_open_positions = [0.10, 0.02, -0.10, 0.10, 0.02, -0.10, 0.10, 0.02, -0.10, -0.15, 0.15] # for pinch mode
         
         # diese variable ist zur synchronisierung von gazebo und diesem skript da, zum publishen der js 
         # das is nur nen fix. wird so nicht mit der echten hand funktionieren. dadurch dass jede iteration mit moveit bewegt wird ist die simulation extram langsam
@@ -53,20 +68,24 @@ class TupleClass:
         
         
         #Create a subscribers to all sensors on all fingers
-        rospy.Subscriber('/s_model_finger_middle_link_1_sensor', ContactsState, self.callback1, queue_size=10)
-        rospy.Subscriber('/s_model_finger_middle_link_2_sensor', ContactsState, self.callback2, queue_size=10)
+        #rospy.Subscriber('/s_model_finger_middle_link_1_sensor', ContactsState, self.callback1, queue_size=10)
+        #rospy.Subscriber('/s_model_finger_middle_link_2_sensor', ContactsState, self.callback2, queue_size=10)
         rospy.Subscriber('/s_model_finger_middle_link_3_sensor', ContactsState, self.callback3, queue_size=10)
-        rospy.Subscriber('/s_model_finger_1_link_1_sensor', ContactsState, self.callback_f1_1, queue_size=10)
-        rospy.Subscriber('/s_model_finger_1_link_2_sensor', ContactsState, self.callback_f1_2, queue_size=10)
+        #rospy.Subscriber('/s_model_finger_1_link_1_sensor', ContactsState, self.callback_f1_1, queue_size=10)
+        #rospy.Subscriber('/s_model_finger_1_link_2_sensor', ContactsState, self.callback_f1_2, queue_size=10)
         rospy.Subscriber('/s_model_finger_1_link_3_sensor', ContactsState, self.callback_f1_3, queue_size=10)
-        rospy.Subscriber('/s_model_finger_2_link_1_sensor', ContactsState, self.callback_f2_1, queue_size=10)
-        rospy.Subscriber('/s_model_finger_2_link_2_sensor', ContactsState, self.callback_f2_2, queue_size=10)
+        #rospy.Subscriber('/s_model_finger_2_link_1_sensor', ContactsState, self.callback_f2_1, queue_size=10)
+        #rospy.Subscriber('/s_model_finger_2_link_2_sensor', ContactsState, self.callback_f2_2, queue_size=10)
         rospy.Subscriber('/s_model_finger_2_link_3_sensor', ContactsState, self.callback_f2_3, queue_size=10)
         rospy.Subscriber('/joint_states', JointState, self.callback_jointstates, queue_size=1)
         rospy.Subscriber('/grasp/goal', tams_ur5_gazebo.msg.graspActionGoal, self.goal_callback, queue_size=1)
         rospy.Subscriber('g', Int16, self.g_callback, queue_size=1)
         rospy.Subscriber('g1', Int16, self.g1_callback, queue_size=1)
         rospy.Subscriber('g2', Int16, self.g2_callback, queue_size=1)
+        # subscribers to endstates from gazebo controller
+        rospy.Subscriber('/endstate_movement_middle', Int16,  self.endstate_middle_cb, queue_size=1)
+        rospy.Subscriber('/endstate_movement_finger_1', Int16, self.endstate_finger_1_cb, queue_size=1)
+        rospy.Subscriber('/endstate_movement_finger_2', Int16, self.endstate_finger_2_cb, queue_size=1)
 
         # create a publisher for the end position joint states
         self.pub_end_estimated_joint_states = rospy.Publisher('/end_estimated_joint_states', JointState, queue_size=1)
@@ -85,7 +104,7 @@ class TupleClass:
                 #self.calculate_new_pose(self.goal[0], self.goal[1], self.goal[2])
                 self.calculate_new_pose(self.current_g, self.current_g1, self.current_g2)
                 self.js_positions = self.new_poses
-                print('js pos:', self.js_positions)
+                #print('js pos:', self.js_positions)
                 # TODO braucht man diesen counter wirklich?
                 """
                 if self.counter <= max(self.goal[0], self.goal[1], self.goal[2]):
@@ -96,7 +115,7 @@ class TupleClass:
                     self.end_estimated_joint_states.position = self.new_poses
                     self.pub_end_estimated_joint_states.publish(self.end_estimated_joint_states) """  
             self.rate_counter += 0.5
-            if self.rate_counter == 8:    # dieses zahl ändern um update rate zu erhöhen/ niedriger machen
+            if self.rate_counter == 7:    # dieses zahl ändern um update rate zu erhöhen/ niedriger machen
                 self.rate_counter = 0
 
             # neue joint states in nachricht eintragen
@@ -118,7 +137,8 @@ class TupleClass:
                 # damit endstate reseted bleibt beim öffnen    
                 self.endstate = [0,0,0]    
             self.rate_counter += 0.5
-            if self.rate_counter == 8:    # dieses zahl ändern um update rate zu erhöhen/ niedriger machen
+            self.endstate = [0,0,0]
+            if self.rate_counter == 7:    # dieses zahl ändern um update rate zu erhöhen/ niedriger machen
                 self.rate_counter = 0
 
             # neue joint states in nachricht eintragen
@@ -144,6 +164,30 @@ class TupleClass:
         self.current_g2 = msg.data 
         print('g2', self.current_g2)   
 
+    def endstate_middle_cb(self, msg):
+        self.middle_end = msg.data
+        if self.middle_end == 1:
+            self.end_movement[0]= 1
+            print("ENDE MOVEMENT MID", self.end_movement[0]) 
+        elif self.middle_end == 0:
+            self.end_movement[0] = 0       
+
+    def endstate_finger_1_cb(self, msg):
+        self.f1_end = msg.data
+        if self.f1_end == 1:
+            self.end_movement[1]= 1
+            print("ENDE MOVEMENT 1", self.end_movement[1]) 
+        elif self.f1_end == 0:
+            self.end_movement[1] = 0    
+
+
+    def endstate_finger_2_cb(self, msg):
+        self.f2_end = msg.data
+        if self.f2_end == 1:
+            self.end_movement[2]= 1 
+            print("ENDE MOVEMENT 2", self.end_movement[2])
+        elif self.f2_end == 0:
+            self.end_movement[2] = 0                
 
     def goal_callback(self, goal:tams_ur5_gazebo.msg.graspActionGoal):
         self.counter = 0
@@ -233,7 +277,7 @@ class TupleClass:
     
     # hier delta thetas auf actuelle position aufrechnen um neue goal positionen zu erhalten
     #def calculate_new_pose(self, _timer_event):
-    def calculate_new_pose(self, g, g1, g2):    
+    def calculate_new_pose(self, g, g1, g2, ):    
         print("Middle Finger")
         self.delta_theta_1, self.delta_theta_2, self.delta_theta_3, self.delta_g, self.endstate[0]  = self.theta_c.calc_delta(g, self.tuple, self.endstate[0])
         #print("delta_theta_2", self.delta_theta_2)
@@ -249,20 +293,59 @@ class TupleClass:
         new_pos_finger_middle_joint_3, self.tuple[5] = self.check_joint_3(self.delta_theta_3 + self.current_jointstates[8])
 
         # new positions finger 1
-        new_pos_finger_1_joint_1, self.tuple_f1[3] = self.check_joint_1(self.f1_delta_theta_1 + self.current_jointstates[0]) # position 6 is for 1st joint for 1 finger
+        new_pos_finger_1_joint_1, self.tuple_f1[3] = self.check_joint_1(self.f1_delta_theta_1 + self.current_jointstates[0]) # 1st joint for 1 finger
         new_pos_finger_1_joint_2, self.tuple_f1[4] = self.check_joint_2(self.f1_delta_theta_2 + self.current_jointstates[1]) # second joint 1 finger
         new_pos_finger_1_joint_3, self.tuple_f1[5] = self.check_joint_3(self.f1_delta_theta_3 + self.current_jointstates[2])
 
         # new positions finger 2
-        new_pos_finger_2_joint_1, self.tuple_f2[3] = self.check_joint_1(self.f2_delta_theta_1 + self.current_jointstates[3]) # position 6 is for 1st joint for 1 finger
+        new_pos_finger_2_joint_1, self.tuple_f2[3] = self.check_joint_1(self.f2_delta_theta_1 + self.current_jointstates[3]) # 1st joint for 1 finger
         new_pos_finger_2_joint_2, self.tuple_f2[4] = self.check_joint_2(self.f2_delta_theta_2 + self.current_jointstates[4]) # secont joint 1 finger
         new_pos_finger_2_joint_3, self.tuple_f2[5] = self.check_joint_3(self.f2_delta_theta_3 + self.current_jointstates[5])
+
+        
+        #if self.current_g == self.old_g and self.current_g > 0 :
+        if self.end_movement[0] == 1:
+            new_pos_finger_middle_joint_1 =  0.0 + self.current_jointstates[6] # position 6 is for 1st joint for middle finger
+            new_pos_finger_middle_joint_2 =  0.0 + self.current_jointstates[7] # second joint middle finger
+            new_pos_finger_middle_joint_3 =  0.0 + self.current_jointstates[8]
+            print("ENDSTATE FINGER MIDDLE")
+            self.endstate[0] = 1
+        #elif self.current_g > self.old_g:
+         #   self.old_g = self.current_g
+          #  print("OLD NOW CURRENT G", self.old_g, self.current_g)    
+
+        
+        #if self.current_g1 == self.old_g1 and self.current_g1 > 0 :
+        if self.end_movement[1] == 1:     
+            new_pos_finger_1_joint_1 = 0.0 + self.current_jointstates[0] # 1st joint for finger 1
+            new_pos_finger_1_joint_2 = 0.0 + self.current_jointstates[1] # second joint finger 1
+            new_pos_finger_1_joint_3 = 0.0 + self.current_jointstates[2]
+            print("ENDSTATE FINGER 1")
+            self.endstate[1] = 1
+        #elif self.current_g1 > self.old_g1:
+         #   self.old_g1 = self.current_g1
+          #  print("OLD NOW CURRENT G1", self.old_g1, self.current_g1)       
+
+        #if self.current_g2 == self.old_g2 and self.current_g2 > 0 :
+        if self.end_movement[2] == 1:
+            new_pos_finger_2_joint_1 = 0.0 + self.current_jointstates[3] # 1st joint for finger 2
+            new_pos_finger_2_joint_2 = 0.0 + self.current_jointstates[4] # second joint finger 2
+            new_pos_finger_2_joint_3 = 0.0 + self.current_jointstates[5]
+            print("ENDSTATE FINGER 2")
+            self.endstate[2] = 1
+            
+        #elif self.current_g2 > self.old_g2:
+         #   self.old_g2 = self.current_g2
+          #  print("OLD NOW CURRENT G2", self.old_g2, self.current_g2)       
+        
+        #self.new_poses = [new_pos_finger_1_joint_1, new_pos_finger_1_joint_2, new_pos_finger_1_joint_3, 
+         #             new_pos_finger_2_joint_1, new_pos_finger_2_joint_2, new_pos_finger_2_joint_3, 
+          #            new_pos_finger_middle_joint_1, new_pos_finger_middle_joint_2, new_pos_finger_middle_joint_3, 0, 0] # for basic mode
         
         self.new_poses = [new_pos_finger_1_joint_1, new_pos_finger_1_joint_2, new_pos_finger_1_joint_3, 
                       new_pos_finger_2_joint_1, new_pos_finger_2_joint_2, new_pos_finger_2_joint_3, 
-                      new_pos_finger_middle_joint_1, new_pos_finger_middle_joint_2, new_pos_finger_middle_joint_3, 0, 0]
+                      new_pos_finger_middle_joint_1, new_pos_finger_middle_joint_2, new_pos_finger_middle_joint_3, -0.15, 0.15] # for pinch mode
         
-
         
         #if self.counter <= g1:
         if self.current_g1 <= self.goal[0]:   
@@ -297,6 +380,7 @@ class TupleClass:
                 self.pub_end_estimated_joint_states.publish(self.end_estimated_joint_states)
                 self.end_js_publish = False
                 self.endstate = [0,0,0]
+                self.end_movement = [0,0,0]
 
            # this is needed or else the hand will continue in previous last closing position after opening  
         if g1 == 0:

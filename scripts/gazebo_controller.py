@@ -47,7 +47,10 @@ class MoveFingers:
         rospy.Subscriber('/joint_states', JointState, self.joint_state_callback, queue_size=10)
         # publisher for end joint states
         self.pub_end_joint_states = rospy.Publisher('/end_joint_states', JointState, queue_size=1)
-        
+        # publisher for endstates - which indicate when a finger is done moving
+        self.pub_endstate_movement_middle = rospy.Publisher('/endstate_movement_middle', Int16, queue_size=10)
+        self.pub_endstate_movement_finger_1 = rospy.Publisher('/endstate_movement_finger_1', Int16, queue_size=10)
+        self.pub_endstate_movement_finger_2 = rospy.Publisher('/endstate_movement_finger_2', Int16, queue_size=10)
 
         self._as = actionlib.SimpleActionServer('grasp', tams_ur5_gazebo.msg.graspAction, execute_cb=self.action_callback, auto_start = False)
         self._as.start()
@@ -86,24 +89,60 @@ class MoveFingers:
             g_msg.data = int(current_m2)  
             self.pub_g2.publish(g_msg)
 
+            if self.endstate[0] == 1 and max(g, g1, g2) > 0:
+                print("ENDSTAAAAATE G", self.endstate[0])
+                self.pub_endstate_movement_middle.publish(self.endstate[0])
+            #elif self.endstate[0] == 0:
+             #   self.pub_endstate_movement_middle.publish(self.endstate[0])
+
+            if self.endstate[1] == 1 and max(g, g1, g2) > 0:
+                print("ENDSTAAAAATE G1", self.endstate[1])
+                self.pub_endstate_movement_finger_1.publish(self.endstate[1])
+            #elif self.endstate[1] == 0:
+             #   self.pub_endstate_movement_finger_1.publish(self.endstate[1])
+
+            if self.endstate[2] == 1 and max(g, g1, g2) > 0:
+                print("ENDSTAAAAATE G2", self.endstate[2])
+                self.pub_endstate_movement_finger_2.publish(self.endstate[2])
+            #elif self.endstate[2] == 0:
+             #   self.pub_endstate_movement_finger_2.publish(self.endstate[2])            
+
 
         if self.counter >= iterations or self.endstate == [1,1,1]:
-            print("------------------------------- max g reached - stopping movement of gripper ------------------------------")
-            #self.gripper_move_group.stop()  
-            #sys.exit()
-            self.tuple = [0,0,0,0,0,0]
-            self.tuple_f1 = [0,0,0,0,0,0]
-            self.tuple_f2 = [0,0,0,0,0,0]
-            self.endstate[0] = 0
-            self.endstate[1] = 0
-            self.endstate[2] = 0
-            self.counter = 0
+            print("------------------------------- max g oder all endstates reached - stopping movement of gripper ------------------------------")
+            
+        
+            if max(g, g1, g2) == 0:
+                self.endstate = [0,0,0]
+
+                # publish endstates for estimator to stop movement
+                self.pub_endstate_movement_middle.publish(self.endstate[0])
+                self.pub_endstate_movement_finger_1.publish(self.endstate[1])
+                self.pub_endstate_movement_finger_2.publish(self.endstate[2])
+
 
             # publish the end joint states
             if max(g, g1, g2) > 0:
                 self.end_joint_states = JointState()
                 self.end_joint_states.position = new_poses
                 self.pub_end_joint_states.publish(self.end_joint_states)
+
+                # publish endstates for estimator to stop movement
+                self.pub_endstate_movement_middle.publish(self.endstate[0])
+                self.pub_endstate_movement_finger_1.publish(self.endstate[1])
+                self.pub_endstate_movement_finger_2.publish(self.endstate[2])
+
+                
+
+            self.tuple = [0,0,0,0,0,0]
+            self.tuple_f1 = [0,0,0,0,0,0]
+            self.tuple_f2 = [0,0,0,0,0,0]
+            self.endstate[0] = 0
+            self.endstate[1] = 0
+            self.endstate[2] = 0
+            self.counter = 0      
+
+            
 
             self._as.set_succeeded(tams_ur5_gazebo.msg.graspActionResult())
         else:
@@ -330,7 +369,9 @@ class MoveFingers:
                 "s_model_finger_middle_joint_1", "s_model_finger_middle_joint_2", "s_model_finger_middle_joint_3", \
                 "s_model_palm_finger_1_joint", "s_model_palm_finger_2_joint" ]
         #js.position = [ mf1, mf2, mf3, mf1, mf2, mf3, mf1, mf2, mf3, -0.016, 0.016 ]
-        js.position = [ f1_1, f1_2, f1_3, f2_1, f2_2, f2_3, mf1, mf2, mf3, -0.016, 0.016 ]
+        #js.position = [ f1_1, f1_2, f1_3, f2_1, f2_2, f2_3, mf1, mf2, mf3, -0.016, 0.016 ] # for basic mode
+        js.position = [ f1_1, f1_2, f1_3, f2_1, f2_2, f2_3, mf1, mf2, mf3, -0.15, 0.15 ] # for pinch mode
+
         return js 
     
     

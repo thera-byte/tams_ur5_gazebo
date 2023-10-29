@@ -22,7 +22,7 @@ class ThetaCalculator:
         m_2 = theta_2_max / 100
         
         f_2_xu = m_2 * delta_g
-        print(f_2_xu)
+        #print(f_2_xu)
         return f_2_xu
     
     # funktion f_3(x,u):  
